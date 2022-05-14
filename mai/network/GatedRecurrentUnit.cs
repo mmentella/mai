@@ -1,4 +1,6 @@
-﻿namespace mai.network
+﻿using System.Linq.Expressions;
+
+namespace mai.network
 {
     public class GatedRecurrentUnit
     {
@@ -12,9 +14,23 @@
 
         private double[] r;
         private double[] z;
-        private double[] h;
 
-        private double[] htilde;
+        private double[] h;
+        private double[] s;
+
+        private double[] o;
+
+        private int[] dim;
+
+        private double[] dx;
+        private double[] dh;
+
+        private double dur;
+        private double duz;
+        private double duh;
+        private double dwr;
+        private double dwz;
+        private double dwh;
 
         public GatedRecurrentUnit(int inputLength, int stateLength)
         {
@@ -30,40 +46,97 @@
             z = Array.Empty<double>();
 
             h = new double[stateLength];
-            htilde = new double[stateLength];
+            s = new double[stateLength];
+
+            o = new double[stateLength];
+
+            dim = new int[] { stateLength, inputLength };
 
             RandomInitialization();
         }
 
         public double[] Forward(double[] input)
         {
-            r = Sigmoid(Sum(DotProduct(wr, h), DotProduct(ur, input))).ToArray();
-            z = Sigmoid(Sum(DotProduct(wz, h), DotProduct(uz, input))).ToArray();
+            r = Sigmoid(Add(DotProduct(wr, s, dim[0]), DotProduct(ur, input, dim[0]))).ToArray();
+            z = Sigmoid(Add(DotProduct(wz, s, dim[0]), DotProduct(uz, input, dim[0]))).ToArray();
 
-            htilde = HyperbolicTanget(Sum(DotProduct(wh, Hadamard(r, h)), DotProduct(uh, input))).ToArray();
+            h = HyperbolicTanget(Add(DotProduct(wh, Hadamard(r, s), dim[0]), DotProduct(uh, input, dim[0]))).ToArray();
 
-            h = Sum(Hadamard(Less(1, z), htilde), Hadamard(z, h)).ToArray();
+            s = Add(Hadamard(Less(1, z), h), Hadamard(z, s)).ToArray();
 
-            return Softmax(h).ToArray();
+            o = Softmax(h).ToArray();
+
+            return o;
         }
 
-        private void RandomInitialization()
+        public double[] Train(double[] inputs,
+                              double[] labels,
+                              double learningRate = 1.0e-3,
+                              int epochs = 100)
+        {
+            double[] loss = (double[])Array.CreateInstance(typeof(double), epochs);
+            for (int epoch = 0; epoch < epochs; epoch++)
+            {
+                double[] output = Forward(inputs);
+                BackPropagate(inputs, output, labels);
+                UpdateWeights(learningRate);
+
+                loss[epoch] = CalculateLoss(output, labels);
+            }
+
+            return loss;
+        }
+
+        private double CalculateLoss(double[] output, double[] labels)
+        {
+            return 0.5 * labels.Zip(output, (l, o) => (l - o) * (l - o)).Sum();
+        }
+
+        private void BackPropagate(double[] input, double[] output, double[] outputSamples)
+        {
+            
+        }
+
+        private void UpdateWeights(double learningRate)
+        {
+            ur = ElementWise(ur, u => u - learningRate * dur).ToArray();
+            uz = ElementWise(uz, u => u - learningRate * duz).ToArray();
+            uh = ElementWise(uh, u => u - learningRate * duh).ToArray();
+
+            wr = ElementWise(wr, w => w - learningRate * dwr).ToArray();
+            wz = ElementWise(wz, w => w - learningRate * dwz).ToArray();
+            wh = ElementWise(wh, w => w - learningRate * dwh).ToArray();
+        }
+
+        private void RandomInitialization(double max = 1.0e-3)
         {
             Random rnd = new();
 
-            ur.AsSpan().Fill(1.0e-6 * rnd.NextDouble());
-            uz.AsSpan().Fill(1.0e-6 * rnd.NextDouble());
-            uh.AsSpan().Fill(1.0e-6 * rnd.NextDouble());
+            ur = ElementWise(ur, u => max * rnd.NextDouble()).ToArray();
+            uz = ElementWise(uz, u => max * rnd.NextDouble()).ToArray();
+            uh = ElementWise(uh, u => max * rnd.NextDouble()).ToArray();
 
-            wr.AsSpan().Fill(1.0e-6 * rnd.NextDouble());
-            wz.AsSpan().Fill(1.0e-6 * rnd.NextDouble());
-            wh.AsSpan().Fill(1.0e-6 * rnd.NextDouble());
-
-            h.AsSpan().Fill(1.0e-6 * rnd.NextDouble());
-            htilde.AsSpan().Fill(1.0e-6 * rnd.NextDouble());
+            wr = ElementWise(wr, w => max * rnd.NextDouble()).ToArray();
+            wz = ElementWise(wz, w => max * rnd.NextDouble()).ToArray();
+            wh = ElementWise(wh, w => max * rnd.NextDouble()).ToArray();
         }
 
-        private Span<double> Sigmoid(Span<double> values)
+        public Span<double> Transpose(Span<double> values, int rows, int columns)
+        {
+            double[] transpose = (double[])Array.CreateInstance(typeof(double), values.Length);
+
+            for (int r = 0; r < rows; r++)
+            {
+                for (int c = 0; c < columns; c++)
+                {
+                    transpose[c * rows + r] = values[r * columns + c];
+                }
+            }
+
+            return transpose;
+        }
+
+        public Span<double> Sigmoid(Span<double> values)
         {
             for (int i = 0; i < values.Length; i++)
             {
@@ -73,7 +146,14 @@
             return values;
         }
 
-        private Span<double> HyperbolicTanget(Span<double> values)
+        public Span<double> SigmoidDerivative(Span<double> values)
+        {
+            var sigmoid = Sigmoid(values);
+
+            return Hadamard(sigmoid, Less(1, sigmoid));
+        }
+
+        public Span<double> HyperbolicTanget(Span<double> values)
         {
             for (int i = 0; i < values.Length; i++)
             {
@@ -84,7 +164,15 @@
             return values;
         }
 
-        private Span<double> Sum(Span<double> left, Span<double> right)
+        public Span<double> HyperbolicTangetDerivative(Span<double> values)
+        {
+            var tanh = HyperbolicTanget(values);
+            tanh = ElementWise(tanh, v => v * v);
+
+            return Less(1, tanh);
+        }
+
+        public Span<double> Add(Span<double> left, Span<double> right)
         {
             double[] sum = (double[])Array.CreateInstance(typeof(double), left.Length);
             for (int i = 0; i < left.Length; i++)
@@ -95,7 +183,40 @@
             return sum;
         }
 
-        private Span<double> Less(double left, Span<double> right)
+        public Span<double> Less(Span<double> left, Span<double> right)
+        {
+            double[] sum = (double[])Array.CreateInstance(typeof(double), left.Length);
+            for (int i = 0; i < left.Length; i++)
+            {
+                sum[i] = left[i] - right[i];
+            }
+
+            return sum;
+        }
+
+        public Span<double> ElementWise(Span<double> left, Span<double> right, Func<double, double, double> func)
+        {
+            double[] result = (double[])Array.CreateInstance(typeof(double), left.Length);
+            for (int i = 0; i < left.Length; i++)
+            {
+                result[i] = func(left[i], right[i]);
+            }
+
+            return result;
+        }
+
+        public Span<double> ElementWise(Span<double> values, Func<double, double> func)
+        {
+            double[] result = (double[])Array.CreateInstance(typeof(double), values.Length);
+            for (int i = 0; i < values.Length; i++)
+            {
+                result[i] = func(values[i]);
+            }
+
+            return result;
+        }
+
+        public Span<double> Less(double left, Span<double> right)
         {
             double[] less = (double[])Array.CreateInstance(typeof(double), right.Length);
             for (int i = 0; i < right.Length; i++)
@@ -106,7 +227,7 @@
             return less;
         }
 
-        private Span<double> Hadamard(Span<double> left, Span<double> right)
+        public Span<double> Hadamard(Span<double> left, Span<double> right)
         {
             double[] hadamard = (double[])Array.CreateInstance(typeof(double), left.Length);
             for (int i = 0; i < left.Length; i++)
@@ -117,10 +238,10 @@
             return hadamard;
         }
 
-        private Span<double> DotProduct(Span<double> matrix, Span<double> vector)
+        public Span<double> DotProduct(Span<double> matrix, Span<double> vector, int rows)
         {
-            double[] dot = (double[])Array.CreateInstance(typeof(double), vector.Length);
-            for (int i = 0; i < dot.Length; i++)
+            double[] dot = (double[])Array.CreateInstance(typeof(double), rows);
+            for (int i = 0; i < rows; i++)
             {
                 dot[i] = Reduce(matrix.Slice(i * vector.Length, vector.Length), vector);
             }
@@ -128,7 +249,7 @@
             return dot;
         }
 
-        private double Reduce(Span<double> left, Span<double> right)
+        public double Reduce(Span<double> left, Span<double> right)
         {
             double reduce = 0;
             for (int i = 0; i < left.Length; i++)
@@ -139,7 +260,7 @@
             return reduce;
         }
 
-        private Span<double> Softmax(Span<double> vector)
+        public Span<double> Softmax(Span<double> vector)
         {
             double energy = 0;
             double[] softmax = (double[])Array.CreateInstance(typeof(double), vector.Length);
@@ -157,6 +278,25 @@
             }
 
             return softmax;
+        }
+
+        public Span<double> Zeros(params int[] size)
+        {
+            int length = 1;
+            for (int i = 0; i < size.Length; i++) { length *= i; }
+
+            return (double[])Array.CreateInstance(typeof(double), length);
+        }
+
+        public Span<double> Ones(params int[] size)
+        {
+            int length = 1;
+            for (int i = 0; i < size.Length; i++) { length *= i; }
+
+            double[] ones = (double[])Array.CreateInstance(typeof(double), length);
+            Array.Fill(ones, 1d);
+
+            return ones;
         }
     }
 }
