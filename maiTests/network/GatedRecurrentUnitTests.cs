@@ -1,5 +1,6 @@
 ﻿using mai.network;
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Xunit;
@@ -32,12 +33,17 @@ namespace mai.network.Tests
         [Fact()]
         public void TrainTest()
         {
-            double[] input = Enumerable.Range(1, 12).Select(r => (double)r).ToArray();
-            double[] output = GaussianDistribution(0, 1, 12);
+            double[] sin = Enumerable.Range(1, 1000)
+                                       .Select(r => Math.Sin(0.1d * r * Math.PI))
+                                       .ToArray();
+            List<(double[] sample, double label)> trainingSet = new();
+            for (int s = 5; s <= sin.Length; s++)
+            {
+                trainingSet.Add((sin[(s - 5)..s], sin[s - 1]));
+            }
+            GatedRecurrentUnit gru = new(5, 20);
 
-            GatedRecurrentUnit gru = new(12, 12);
-
-            double[] loss = gru.Train(input, output, learningRate: 0.1d, epochs: 1000);
+            double[] loss = gru.Train(trainingSet, k1: 20, k2: 20, epochs: 100);
         }
 
         private double[] GaussianDistribution(double mean, double stdDev, int length)
@@ -60,6 +66,28 @@ namespace mai.network.Tests
             }
 
             return distribution;
+        }
+
+        [Fact()]
+        public void HadamardTest()
+        {
+            double[] values = Enumerable.Range(1, 10)
+                                        .Select(i => (double)i)
+                                        .ToArray();
+            GatedRecurrentUnit gru = new(10, 10);
+
+            var hadamard = gru.Hadamard(values, values, values);
+        }
+
+        [Fact()]
+        public void DotProductTest()
+        {
+            double[] values = Enumerable.Range(1, 3)
+                                        .Select(i => (double)i)
+                                        .ToArray();
+            GatedRecurrentUnit gru = new(3, 3);
+
+            var dot = gru.DotProduct(values, values, 3, 1, 1, 3);
         }
     }
 }
