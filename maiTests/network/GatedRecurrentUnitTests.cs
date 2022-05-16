@@ -43,7 +43,7 @@ namespace mai.network.Tests
             }
             GatedRecurrentUnit gru = new(5, 20);
 
-            double[] loss = gru.Train(trainingSet, k1: 20, k2: 20, epochs: 100);
+            double[] loss = gru.Train(trainingSet, k1: 20, k2: 20, epochs: 1);
         }
 
         private double[] GaussianDistribution(double mean, double stdDev, int length)

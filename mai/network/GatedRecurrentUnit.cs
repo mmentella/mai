@@ -105,17 +105,17 @@ namespace mai.network
             Span<double> dldwh = (double[])Array.CreateInstance(typeof(double), dim[0] * dim[0]);
             Span<double> dlduh = (double[])Array.CreateInstance(typeof(double), dim[0] * dim[1]);
             /***********************************************************************************/
-            Span<double> dsdbz = (double[])Array.CreateInstance(typeof(double), dim[0]);
-            Span<double> dsdwz = (double[])Array.CreateInstance(typeof(double), dim[0] * dim[0]);
-            Span<double> dsduz = (double[])Array.CreateInstance(typeof(double), dim[0] * dim[1]);
-
-            Span<double> dsdbr = (double[])Array.CreateInstance(typeof(double), dim[0]);
-            Span<double> dsdwr = (double[])Array.CreateInstance(typeof(double), dim[0] * dim[0]);
-            Span<double> dsdur = (double[])Array.CreateInstance(typeof(double), dim[0] * dim[1]);
-
-            Span<double> dsdbh = (double[])Array.CreateInstance(typeof(double), dim[0]);
-            Span<double> dsdwh = (double[])Array.CreateInstance(typeof(double), dim[0] * dim[0]);
-            Span<double> dsduh = (double[])Array.CreateInstance(typeof(double), dim[0] * dim[1]);
+            Span<double> dsdbz ;//= (double[])Array.CreateInstance(typeof(double), dim[0]);
+            Span<double> dsdwz ;//= (double[])Array.CreateInstance(typeof(double), dim[0] * dim[0]);
+            Span<double> dsduz ;//= (double[])Array.CreateInstance(typeof(double), dim[0] * dim[1]);
+                               
+            Span<double> dsdbr ;//= (double[])Array.CreateInstance(typeof(double), dim[0]);
+            Span<double> dsdwr ;//= (double[])Array.CreateInstance(typeof(double), dim[0] * dim[0]);
+            Span<double> dsdur ;//= (double[])Array.CreateInstance(typeof(double), dim[0] * dim[1]);
+                               
+            Span<double> dsdbh ;//= (double[])Array.CreateInstance(typeof(double), dim[0]);
+            Span<double> dsdwh ;//= (double[])Array.CreateInstance(typeof(double), dim[0] * dim[0]);
+            Span<double> dsduh ;// (double[])Array.CreateInstance(typeof(double), dim[0] * dim[1]);
 
             Span<double> dsds = (double[])Array.CreateInstance(typeof(double), dim[0]);
 
@@ -159,37 +159,24 @@ namespace mai.network
                                                          Hadamard(r, Less(1, r)), dim[0])),
                                      DotProduct(Transpose(wh, dim[0], dim[0]),
                                                 Hadamard(r, Less(1, Square(h))), dim[0]))).ToArray());
-                dsds = Hadamard(dsds, dsidsj);
-                dldbz = Add(dldbz, Hadamard(dlds.ToArray(), dsds.ToArray(), dsdbz.ToArray()));
-                dldwz = Add(dldwz, DotProduct(DotProduct(dlds, dsds, dim[0], 1, 1, dim[0]), 
-                                              dsdwz, dim[0], dim[0], dim[0], dim[0]));
-                dlduz = Add(dlduz, DotProduct(DotProduct(dlds, dsds, dim[0], 1, 1, dim[0]), 
-                                              dsduz, dim[0], dim[0], dim[0], dim[1]));
+                dsds = DotProduct(dlds, dsidsj, dim[0], 1, 1, dim[0]);
 
-                dldbr = Add(dldbr, Hadamard(dlds.ToArray(), dsds.ToArray(), dsdbr.ToArray()));
-                dldwr = Add(dldwr, DotProduct(DotProduct(dlds, dsds, dim[0], 1, 1, dim[0]), 
-                                              dsdwr, dim[0], dim[0], dim[0], dim[0]));
-                dldur = Add(dldur, DotProduct(DotProduct(dlds, dsds, dim[0], 1, 1, dim[0]), 
-                                              dsdur, dim[0], dim[0], dim[0], dim[1]));
+                var dldb = DotProduct(dsds, dsdbz, dim[0], dim[0], dim[0], 1);
+                dldwz = Add(dldwz, DotProduct(dldb, dsdwz, dim[0], 1, 1, dim[0]));
+                dlduz = Add(dlduz, DotProduct(dldb, dsduz, dim[0], 1, 1, dim[1]));
+                dldbz = Add(dldbz, dldb);
 
-                dldbh = Add(dldbh, Hadamard(dlds.ToArray(), dsds.ToArray(), dsdbh.ToArray()));
-                dldwh = Add(dldwh, DotProduct(DotProduct(dlds, dsds, dim[0], 1, 1, dim[0]), 
-                                              dsdwh, dim[0], dim[0], dim[0], dim[0]));
-                dlduh = Add(dlduh, DotProduct(DotProduct(dlds, dsds, dim[0], 1, 1, dim[0]),
-                                              dsduh, dim[0], dim[0], dim[0], dim[1]));
+                dldb = DotProduct(dsds, dsdbr, dim[0], dim[0], dim[0], 1);
+                dldwr = Add(dldwr, DotProduct(dldb, dsdwr, dim[0], 1, 1, dim[0]));
+                dldur = Add(dldur, DotProduct(dldb, dsdur, dim[0], 1, 1, dim[1]));
+                dldbr = Add(dldbr, dldb);
+
+                dldb = DotProduct(dsds, dsdbz, dim[0], dim[0], dim[0], 1);
+                dldwh = Add(dldwh, DotProduct(dldb, dsdwh, dim[0], 1, 1, dim[0]));
+                dlduh = Add(dlduh, DotProduct(dldb, dsduh, dim[0], 1, 1, dim[1]));
+                dldbh = Add(dldbh, dldb);
             }
 
-        }
-
-        private void UpdateWeights(double learningRate)
-        {
-            ur = ElementWise(ur, u => u - learningRate * dur).ToArray();
-            uz = ElementWise(uz, u => u - learningRate * duz).ToArray();
-            uh = ElementWise(uh, u => u - learningRate * duh).ToArray();
-
-            wr = ElementWise(wr, w => w - learningRate * dwr).ToArray();
-            wz = ElementWise(wz, w => w - learningRate * dwz).ToArray();
-            wh = ElementWise(wh, w => w - learningRate * dwh).ToArray();
         }
 
         private void RandomInitialization(double max = 1.0e-3)
