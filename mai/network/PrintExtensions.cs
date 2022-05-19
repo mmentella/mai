@@ -1,16 +1,12 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 
-namespace mai.network
+namespace mai
 {
     public static class PrintExtensions
     {
         public static string Print(this double[] values, int rows, int columns)
         {
-            int Offset(int[] index) { return index[0]*columns + index[1]; }
+            int Offset(int[] index) { return index[0] * columns + index[1]; }
             bool IncrementIndex(int[] index, int? skipAxis = null)
             {
                 int[] shape = { rows, columns };
@@ -101,6 +97,25 @@ namespace mai.network
                                  $"Length {rows * columns})");
 
             return stringBuilder.ToString();
+        }
+
+        public static string Print(this double[,] data)
+        {
+            int rows = data.GetLength(0);
+            int columns = data.GetLength(1);
+
+            if (rows == 1 && columns == 1) { return $"[{data[0, 0]}] Rank 1, Length 1"; }
+
+            double[] linear = new double[rows * columns];
+            for (int r = 0; r < rows; r++)
+            {
+                for (int c = 0; c < columns; c++)
+                {
+                    linear[r * columns + c] = data[r, c];
+                }
+            }
+
+            return linear.Print(rows, columns);
         }
     }
 }

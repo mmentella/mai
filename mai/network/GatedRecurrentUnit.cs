@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using System.Runtime.CompilerServices;
 
 namespace mai.network
 {
@@ -20,24 +21,19 @@ namespace mai.network
 
         private double[] o;
 
-        private int[] dim;
+        private readonly int inputLength;
+        private readonly int stateLength;
+        private readonly int memoryLength;
 
-        private double dur;
-        private double duz;
-        private double duh;
-        private double dwr;
-        private double dwz;
-        private double dwh;
-
-        public GatedRecurrentUnit(int inputLength, int stateLength)
+        public GatedRecurrentUnit(int inputLength, int stateLength, int memoryLength)
         {
-            ur = new double[stateLength * inputLength];
-            uz = new double[stateLength * inputLength];
-            uh = new double[stateLength * inputLength];
+            ur = new double[memoryLength * inputLength];
+            uz = new double[memoryLength * inputLength];
+            uh = new double[memoryLength * inputLength];
 
-            wr = new double[stateLength * stateLength];
-            wz = new double[stateLength * stateLength];
-            wh = new double[stateLength * stateLength];
+            wr = new double[memoryLength * memoryLength];
+            wz = new double[memoryLength * memoryLength];
+            wh = new double[memoryLength * memoryLength];
 
             r = Array.Empty<double>();
             z = Array.Empty<double>();
@@ -47,17 +43,19 @@ namespace mai.network
 
             o = new double[stateLength];
 
-            dim = new int[] { stateLength, inputLength };
+            this.inputLength = inputLength;
+            this.stateLength = stateLength;
+            this.memoryLength = memoryLength;
 
             RandomInitialization();
         }
 
         public double[] Forward(double[] input)
         {
-            r = Sigmoid(Add(DotProduct(wr, s, dim[0]), DotProduct(ur, input, dim[0]))).ToArray();
-            z = Sigmoid(Add(DotProduct(wz, s, dim[0]), DotProduct(uz, input, dim[0]))).ToArray();
+            r = Sigmoid(Add(DotProduct(wr, s, stateLength), DotProduct(ur, input, stateLength))).ToArray();
+            z = Sigmoid(Add(DotProduct(wz, s, stateLength), DotProduct(uz, input, stateLength))).ToArray();
 
-            h = HyperbolicTanget(Add(DotProduct(wh, Hadamard(r, s), dim[0]), DotProduct(uh, input, dim[0]))).ToArray();
+            h = HyperbolicTanget(Add(DotProduct(wh, Hadamard(r, s), stateLength), DotProduct(uh, input, stateLength))).ToArray();
 
             s = Add(Hadamard(Less(1, z), h), Hadamard(z, s)).ToArray();
 
@@ -66,7 +64,7 @@ namespace mai.network
             return o;
         }
 
-        public double[] Train(IList<(double[] sample, double label)> trainingSet,
+        public double[] Train(IList<(double[] sample, double[] label)> trainingSet,
                               double learningRate = 1.0e-1,
                               int epochs = 1000,
                               int k1 = 10,
@@ -75,7 +73,7 @@ namespace mai.network
             double[] loss = (double[])Array.CreateInstance(typeof(double), epochs);
             for (int epoch = 0; epoch < epochs; epoch++)
             {
-                BackPropagate(trainingSet, learningRate, k1, k2);
+                BackPropagate(trainingSet, learningRate);
             }
 
             return loss;
@@ -88,95 +86,82 @@ namespace mai.network
 
 
 
-        private void BackPropagate(IList<(double[] sample, double label)> trainingSet,
-                                   double learningRate,
-                                   int k1,
-                                   int k2)
+        private void BackPropagate(IList<(double[] sample, double[] label)> trainingSet, double learningRate)
         {
-            Span<double> dldbz = (double[])Array.CreateInstance(typeof(double), dim[0]);
-            Span<double> dldwz = (double[])Array.CreateInstance(typeof(double), dim[0] * dim[0]);
-            Span<double> dlduz = (double[])Array.CreateInstance(typeof(double), dim[0] * dim[1]);
-                          
-            Span<double> dldbr = (double[])Array.CreateInstance(typeof(double), dim[0]);
-            Span<double> dldwr = (double[])Array.CreateInstance(typeof(double), dim[0] * dim[0]);
-            Span<double> dldur = (double[])Array.CreateInstance(typeof(double), dim[0] * dim[1]);
-                          
-            Span<double> dldbh = (double[])Array.CreateInstance(typeof(double), dim[0]);
-            Span<double> dldwh = (double[])Array.CreateInstance(typeof(double), dim[0] * dim[0]);
-            Span<double> dlduh = (double[])Array.CreateInstance(typeof(double), dim[0] * dim[1]);
-            /***********************************************************************************/
-            Span<double> dsdbz ;//= (double[])Array.CreateInstance(typeof(double), dim[0]);
-            Span<double> dsdwz ;//= (double[])Array.CreateInstance(typeof(double), dim[0] * dim[0]);
-            Span<double> dsduz ;//= (double[])Array.CreateInstance(typeof(double), dim[0] * dim[1]);
-                               
-            Span<double> dsdbr ;//= (double[])Array.CreateInstance(typeof(double), dim[0]);
-            Span<double> dsdwr ;//= (double[])Array.CreateInstance(typeof(double), dim[0] * dim[0]);
-            Span<double> dsdur ;//= (double[])Array.CreateInstance(typeof(double), dim[0] * dim[1]);
-                               
-            Span<double> dsdbh ;//= (double[])Array.CreateInstance(typeof(double), dim[0]);
-            Span<double> dsdwh ;//= (double[])Array.CreateInstance(typeof(double), dim[0] * dim[0]);
-            Span<double> dsduh ;// (double[])Array.CreateInstance(typeof(double), dim[0] * dim[1]);
-
-            Span<double> dsds = (double[])Array.CreateInstance(typeof(double), dim[0]);
-
-            foreach (var training in trainingSet)
+            var s0 = s;
+            foreach (var (sample, label) in trainingSet)
             {
-                double[] input = training.sample;
+                IDictionary<int, (double[] z, double[] r, double[] h, double[] s, double[] o)> memory =
+                    new Dictionary<int, (double[] z, double[] r, double[] h, double[] s, double[] o)>();
+                for (int timestep = 1; timestep <= sample.Length; timestep++)
+                {
+                    double[] output = Forward(new double[] { sample[timestep - 1] });
+                    memory.Add(timestep, (z, r, h, s, o));
+                }
 
-                double[] sprev = (double[])Array.CreateInstance(typeof(double), s.Length);
-                Array.Copy(s, sprev, s.Length);
+                var deltay = Less(memory[sample.Length].o, label);
+                double[] dst = (double[])Array.CreateInstance(typeof(double), stateLength);
+                double[] dsr = (double[])Array.CreateInstance(typeof(double), stateLength);
 
-                double[] output = Forward(input);
+                double[] dbh = (double[])Array.CreateInstance(typeof(double), stateLength);
+                double[] duh = (double[])Array.CreateInstance(typeof(double), stateLength * inputLength);
+                double[] dwh = (double[])Array.CreateInstance(typeof(double), stateLength * stateLength);
 
-                var dlds = Less(output, s);
+                double[] dbr = (double[])Array.CreateInstance(typeof(double), stateLength);
+                double[] dur = (double[])Array.CreateInstance(typeof(double), stateLength * inputLength);
+                double[] dwr = (double[])Array.CreateInstance(typeof(double), stateLength * stateLength);
 
-                dsdbz = Hadamard(Less(sprev, h).ToArray(), z, Less(1, z).ToArray());
-                dsdwz = DotProduct(dsdbz, sprev, dim[0], 1, 1, dim[0]);
-                dsduz = DotProduct(dsdbz, input, dim[0], 1, 1, dim[1]);
+                double[] dbz = (double[])Array.CreateInstance(typeof(double), stateLength);
+                double[] duz = (double[])Array.CreateInstance(typeof(double), stateLength * inputLength);
+                double[] dwz = (double[])Array.CreateInstance(typeof(double), stateLength * stateLength);
 
-                dsdbr = Hadamard(Less(1, z).ToArray(),
-                                 DotProduct(Transpose(wh, dim[0], dim[0]),
-                                            Hadamard(sprev, Less(1, Square(h))), dim[0])
-                                 .ToArray(),
-                                 r,
-                                 Less(1, r).ToArray());
-                dsdwr = DotProduct(dsdbr, sprev, dim[0], 1, 1, dim[0]);
-                dsdur = DotProduct(dsdbr, input, dim[0], 1, 1, dim[1]);
+                for (int t = sample.Length; t > 1; t--)
+                {
+                    dst = Add(dst, deltay);
+                    var dstCopy = dst.ToArray();
+                    var dtanhinput = Hadamard(dst, Less(1, memory[t].z), Less(1, Square(memory[t].h)));
+                    
+                    dbh = Add(dbh, dtanhinput);
+                    duh = Add(duh, DotProduct(dtanhinput, Transpose(new double[] { sample[t - 1] }, inputLength, 1), stateLength, 1, 1, inputLength));
+                    dwh = Add(dwh, DotProduct(dtanhinput, Hadamard(memory[t - 1].s, memory[t].r), stateLength, 1, 1, stateLength));
 
-                dsdbh = Hadamard(Less(1, z), Less(1, Square(h)));
-                dsdwh = DotProduct(dsdbh, Hadamard(r, sprev), dim[0], 1, 1, dim[0]);
-                dsduh = DotProduct(dsdbh, input, dim[0], 1, 1, dim[1]);
+                    dsr = DotProduct(Transpose(wh, stateLength, stateLength), dtanhinput, stateLength, stateLength, stateLength, 1);
+                    dst = Hadamard(dsr, memory[t].r);
+                    var dsigInputR = Hadamard(dsr, memory[t - 1].s, memory[t].r, Less(1, memory[t].r));
+                    
+                    dbr = Add(dbr, dsigInputR);
+                    dur = Add(duh, DotProduct(dsigInputR, Transpose(new double[] { sample[t - 1] }, inputLength, 1), stateLength, 1, 1, inputLength));
+                    dwr = Add(dwh, DotProduct(dsigInputR, memory[t - 1].s, stateLength, 1, 1, stateLength));
 
-                var dsidsj = 
-                    Add(z,
-                        Hadamard(Less(sprev, h),
-                                        DotProduct(Transpose(wz, dim[0], dim[0]),
-                                                   Hadamard(z, Less(1, z)), dim[0])).ToArray(),
-                        Hadamard(Less(1, z),
-                                 Add(Hadamard(DotProduct(Transpose(wh, dim[0], dim[0]),
-                                                         Hadamard(sprev, Less(1, Square(h))), dim[0]),
-                                              DotProduct(Transpose(wr, dim[0], dim[0]),
-                                                         Hadamard(r, Less(1, r)), dim[0])),
-                                     DotProduct(Transpose(wh, dim[0], dim[0]),
-                                                Hadamard(r, Less(1, Square(h))), dim[0]))).ToArray());
-                dsds = DotProduct(dlds, dsidsj, dim[0], 1, 1, dim[0]);
+                    dst = Add(dst, DotProduct(Transpose(wr, stateLength, stateLength), dsigInputR, stateLength, stateLength, stateLength, 1));
+                    dst = Add(dst, Hadamard(dstCopy, memory[t].z));
 
-                var dldb = DotProduct(dsds, dsdbz, dim[0], dim[0], dim[0], 1);
-                dldwz = Add(dldwz, DotProduct(dldb, dsdwz, dim[0], 1, 1, dim[0]));
-                dlduz = Add(dlduz, DotProduct(dldb, dsduz, dim[0], 1, 1, dim[1]));
-                dldbz = Add(dldbz, dldb);
+                    var dz = Hadamard(dstCopy, Less(memory[t - 1].s, memory[t].h));
+                    var dsigInputZ = Hadamard(dz, memory[t].z, Less(1, memory[t].z));
 
-                dldb = DotProduct(dsds, dsdbr, dim[0], dim[0], dim[0], 1);
-                dldwr = Add(dldwr, DotProduct(dldb, dsdwr, dim[0], 1, 1, dim[0]));
-                dldur = Add(dldur, DotProduct(dldb, dsdur, dim[0], 1, 1, dim[1]));
-                dldbr = Add(dldbr, dldb);
+                    dbz = Add(dbz, dsigInputZ);
+                    duz = Add(duh, DotProduct(dsigInputR, Transpose(new double[] { sample[t - 1] }, inputLength, 1), stateLength, 1, 1, inputLength));
+                    dwz = Add(dwh, DotProduct(dsigInputR, memory[t - 1].s, stateLength, 1, 1, stateLength));
 
-                dldb = DotProduct(dsds, dsdbz, dim[0], dim[0], dim[0], 1);
-                dldwh = Add(dldwh, DotProduct(dldb, dsdwh, dim[0], 1, 1, dim[0]));
-                dlduh = Add(dlduh, DotProduct(dldb, dsduh, dim[0], 1, 1, dim[1]));
-                dldbh = Add(dldbh, dldb);
+                    dst = Add(dst, DotProduct(Transpose(wz, stateLength, stateLength), dsigInputZ, stateLength, stateLength, stateLength, 1));
+                }
+
+                dst = Add(dst, deltay);
+                var dtanhinput1 = Hadamard(dst, Less(1, memory[1].z), Less(1, Square(memory[1].h)));
+
+                dbh = Add(dbh, dtanhinput1);
+                duh = Add(duh, DotProduct(dtanhinput1, Transpose(new double[] { sample[0] }, inputLength, 1), stateLength, 1, 1, inputLength));
+                dwh = Add(dwh, DotProduct(dtanhinput1, Hadamard(s0, memory[1].r), stateLength, 1, 1, stateLength));
+
+                dsr = DotProduct(Transpose(wh, stateLength, stateLength), dtanhinput1, stateLength, stateLength, stateLength, 1);
+                dst = Hadamard(dsr, memory[1].r);
+                var dsigInputR1 = Hadamard(dsr, s0, memory[1].r, Less(1, memory[1].r));
+
+                dbr = Add(dbr, dsigInputR1);
+                dur = Add(duh, DotProduct(dsigInputR1, Transpose(new double[] { sample[0] }, inputLength, 1), stateLength, 1, 1, inputLength));
+                dwr = Add(dwh, DotProduct(dsigInputR1, s0, stateLength, 1, 1, stateLength));
+
             }
-
         }
 
         private void RandomInitialization(double max = 1.0e-3)
@@ -192,12 +177,12 @@ namespace mai.network
             wh = ElementWise(wh, w => max * rnd.NextDouble()).ToArray();
         }
 
-        public Span<double> Square(Span<double> values)
+        public double[] Square(double[] values)
         {
             return ElementWise(values, v => v * v);
         }
 
-        public Span<double> Transpose(Span<double> values, int rows, int columns)
+        public double[] Transpose(double[] values, int rows, int columns)
         {
             double[] transpose = (double[])Array.CreateInstance(typeof(double), values.Length);
 
@@ -212,43 +197,26 @@ namespace mai.network
             return transpose;
         }
 
-        public Span<double> Sigmoid(Span<double> values)
-        {
-            for (int i = 0; i < values.Length; i++)
-            {
-                values[i] = 1 / (1 + Math.Exp(-values[i]));
-            }
+        public double[] Sigmoid(double[] values) => ElementWise(values, v => Sigmoid(v));
 
-            return values;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public double Sigmoid(double x) => 1 / (1 + Math.Exp(-x));
 
-        public Span<double> SigmoidDerivative(Span<double> values)
-        {
-            var sigmoid = Sigmoid(values);
+        public double[] SigmoidDerivative(double[] values) =>
+            ElementWise(values, v => { double s = Sigmoid(v); return s * (1 - s); });
 
-            return Hadamard(sigmoid, Less(1, sigmoid));
-        }
+        public double[] HyperbolicTanget(double[] values) =>
+            ElementWise(values, v => HyperbolicTanget(v));
 
-        public Span<double> HyperbolicTanget(Span<double> values)
-        {
-            for (int i = 0; i < values.Length; i++)
-            {
-                values[i] = (Math.Exp(values[i]) - Math.Exp(-values[i])) /
-                            (Math.Exp(values[i]) + Math.Exp(-values[i]));
-            }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public double HyperbolicTanget(double x) =>
+            (Math.Exp(x) - Math.Exp(-x)) /
+            (Math.Exp(x) + Math.Exp(-x));
 
-            return values;
-        }
+        public double[] HyperbolicTangetDerivative(double[] values) =>
+            ElementWise(values, v => { double h = HyperbolicTanget(v); return 1 - h * h; });
 
-        public Span<double> HyperbolicTangetDerivative(Span<double> values)
-        {
-            var tanh = HyperbolicTanget(values);
-            tanh = ElementWise(tanh, v => v * v);
-
-            return Less(1, tanh);
-        }
-
-        public Span<double> Add(Span<double> left, Span<double> right)
+        public double[] Add(double[] left, double[] right)
         {
             double[] sum = (double[])Array.CreateInstance(typeof(double), left.Length);
             for (int i = 0; i < left.Length; i++)
@@ -259,7 +227,7 @@ namespace mai.network
             return sum;
         }
 
-        public Span<double> Add(params double[][] values)
+        public double[] Add(params double[][] values)
         {
             double[] sum = (double[])Array.CreateInstance(typeof(double), values[0].Length);
             for (int i = 0; i < sum.Length; i++)
@@ -274,7 +242,7 @@ namespace mai.network
             return sum;
         }
 
-        public Span<double> Less(Span<double> left, Span<double> right)
+        public double[] Less(double[] left, double[] right)
         {
             double[] sum = (double[])Array.CreateInstance(typeof(double), left.Length);
             for (int i = 0; i < left.Length; i++)
@@ -285,7 +253,7 @@ namespace mai.network
             return sum;
         }
 
-        public Span<double> ElementWise(Span<double> left, Span<double> right, Func<double, double, double> func)
+        public double[] ElementWise(double[] left, double[] right, Func<double, double, double> func)
         {
             double[] result = (double[])Array.CreateInstance(typeof(double), left.Length);
             for (int i = 0; i < left.Length; i++)
@@ -296,7 +264,8 @@ namespace mai.network
             return result;
         }
 
-        public Span<double> ElementWise(Span<double> values, Func<double, double> func)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public double[] ElementWise(double[] values, Func<double, double> func)
         {
             double[] result = (double[])Array.CreateInstance(typeof(double), values.Length);
             for (int i = 0; i < values.Length; i++)
@@ -307,7 +276,7 @@ namespace mai.network
             return result;
         }
 
-        public Span<double> Less(double left, Span<double> right)
+        public double[] Less(double left, double[] right)
         {
             double[] less = (double[])Array.CreateInstance(typeof(double), right.Length);
             for (int i = 0; i < right.Length; i++)
@@ -318,7 +287,7 @@ namespace mai.network
             return less;
         }
 
-        public Span<double> Hadamard(Span<double> left, Span<double> right)
+        public double[] Hadamard(double[] left, double[] right)
         {
             double[] hadamard = (double[])Array.CreateInstance(typeof(double), left.Length);
             for (int i = 0; i < left.Length; i++)
@@ -329,7 +298,7 @@ namespace mai.network
             return hadamard;
         }
 
-        public Span<double> Hadamard(params double[][] values)
+        public double[] Hadamard(params double[][] values)
         {
             double[] hadamard = (double[])Array.CreateInstance(typeof(double), values[0].Length);
             for (int i = 0; i < hadamard.Length; i++)
@@ -344,34 +313,34 @@ namespace mai.network
             return hadamard;
         }
 
-        public Span<double> DotProduct(Span<double> matrix, Span<double> vector, int rows)
+        public double[] DotProduct(double[] matrix, double[] vector, int rows)
         {
             double[] dot = (double[])Array.CreateInstance(typeof(double), rows);
             for (int i = 0; i < rows; i++)
             {
-                dot[i] = Reduce(matrix.Slice(i * vector.Length, vector.Length), vector);
+                dot[i] = Reduce(matrix[(i * vector.Length)..((i + 1) * vector.Length)], vector);
             }
 
             return dot;
         }
 
-        public Span<double> DotProduct(Span<double> left, Span<double> right, params int[] dim)
+        public double[] DotProduct(double[] left, double[] right, params int[] dim)
         {
-            double[] dot = (double[])Array.CreateInstance(typeof(double), dim[0] * dim[3]);
+            double[] dot = (double[])Array.CreateInstance(typeof(double), stateLength * dim[3]);
 
             right = Transpose(right, dim[2], dim[3]);
-            for (int r = 0; r < dim[0]; r++)
+            for (int r = 0; r < stateLength; r++)
             {
                 for (int c = 0; c < dim[3]; c++)
                 {
-                    dot[r * dim[3] + c] = Reduce(left.Slice(r * dim[1], dim[1]), right.Slice(c * dim[2], dim[2]));
+                    dot[r * dim[3] + c] = Reduce(left[(r * inputLength)..((r + 1) * inputLength)], right[(c * dim[2])..((c + 1) * dim[2])]);
                 }
             }
 
             return dot;
         }
 
-        public double Reduce(Span<double> left, Span<double> right)
+        public double Reduce(double[] left, double[] right)
         {
             double reduce = 0;
             for (int i = 0; i < left.Length; i++)
@@ -382,7 +351,7 @@ namespace mai.network
             return reduce;
         }
 
-        public Span<double> Softmax(Span<double> vector)
+        public double[] Softmax(double[] vector)
         {
             double energy = 0;
             double[] softmax = (double[])Array.CreateInstance(typeof(double), vector.Length);
@@ -402,7 +371,7 @@ namespace mai.network
             return softmax;
         }
 
-        public Span<double> Zeros(params int[] size)
+        public double[] Zeros(params int[] size)
         {
             int length = 1;
             for (int i = 0; i < size.Length; i++) { length *= i; }
@@ -410,7 +379,7 @@ namespace mai.network
             return (double[])Array.CreateInstance(typeof(double), length);
         }
 
-        public Span<double> Ones(params int[] size)
+        public double[] Ones(params int[] size)
         {
             int length = 1;
             for (int i = 0; i < size.Length; i++) { length *= i; }

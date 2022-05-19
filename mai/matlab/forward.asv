@@ -29,3 +29,6 @@ function [s,yhat,s,z,r,c] = forward(x,y,uz,ur,uc,wz,wr,wc,bz,br,bc,v,bv,s0)
     end
 
 end
+
+function [dv,dbv,duz,dUr,dUc,dWz,dWr,dWc,dbz,dbr,dbc,ds0] = backward(x,y,Uz,Ur,Uc,Wz,Wr,Wc,bz,br,bc,V,bV,s0)
+end
