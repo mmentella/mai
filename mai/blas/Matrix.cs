@@ -20,6 +20,18 @@
             this.data = data;
         }
 
+        public Matrix(double[] data)
+        {
+            Rows = data.Length;
+            Columns = 1;
+
+            this.data = new double[Rows, Columns];
+            for (int r = 0; r < Rows; r++)
+            {
+                this.data[r, 0] = data[r];
+            }
+        }
+
         public int Rows { get; }
         public int Columns { get; }
         public int Length => Rows * Columns;
@@ -61,6 +73,25 @@
             }
 
             return hadamard;
+        }
+
+        public Matrix InitRandom()
+        {
+            Random random = new();
+            Run(this, d => d = 2 * random.NextDouble() - 1);
+
+            return this;
+        }
+
+        public Matrix Sigmoid()
+        {
+            Run(this, m => 1 / (1 + Math.Exp(-m)));
+            return this;
+        }
+        public Matrix Tanh()
+        {
+            Run(this, m => (Math.Exp(m) - Math.Exp(-m)) / (Math.Exp(m) + Math.Exp(-m)));
+            return this;
         }
 
         public string Print() => data.Print();
@@ -108,6 +139,35 @@
             }
 
             return less;
+        }
+
+        public static Matrix operator *(Matrix left, Matrix rigth)
+        {
+            Matrix dot = new(left.Rows, rigth.Columns);
+
+            for (int r = 0; r < dot.Rows; r++)
+            {
+                for (int c = 0; c < dot.Columns; c++)
+                {
+                    for (int k = 0; k < left.Columns; k++)
+                    {
+                        dot[r, c] += left[r, k] * rigth[k, c];
+                    }
+                }
+            }
+
+            return dot;
+        }
+
+        private void Run(Matrix matrix, Func<double, double> func)
+        {
+            for (int r = 0; r < Rows; r++)
+            {
+                for (int c = 0; c < Columns; c++)
+                {
+                    matrix[r, c] = func(matrix[r, c]);
+                }
+            }
         }
 
         private void Run(Matrix left, Matrix rigth, Action<Matrix, Matrix, int, int> action)

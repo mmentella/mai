@@ -22,7 +22,7 @@ function [s,yhat,loss,z,r,c] = forward(x,y,uz,ur,uc,wz,wr,wc,bz,br,bc,v,bv,s0)
         z(:,t) = sigmoid(uz*x(:,t) + wz*s(:,t-1) + bz);
         r(:,t) = sigmoid(ur*x(:,t) + wr*s(:,t-1) + br);
         c(:,t) = tanh(uc*x(:,t) + wc*(s(:,t-1).*r(:,t)) + bc);
-        s(:,t) = (t - z(:,t)).*c(:,t) + z(:,t).*s(:,t-1);
+        s(:,t) = (1 - z(:,t)).*c(:,t) + z(:,t).*s(:,t-1);
         
         yhat(:,t) = softmax(v*s(:,t) + bv);
         loss(t) = sum(-y(:,t).*log(yhat(:,t)));
