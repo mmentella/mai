@@ -14,8 +14,8 @@ namespace mai.network.Tests
         public void TrainTest()
         {
             double[] sin = Enumerable.Range(1, 1000)
-                                       .Select(r => Math.Sin(0.1d * r * Math.PI))
-                                       .ToArray();
+                                     .Select(r => Math.Sin(0.1d * r * Math.PI))
+                                     .ToArray();
             List<(Matrix sample, Matrix label)> trainingSet = new();
             for (int s = 5; s <= sin.Length; s++)
             {
@@ -24,6 +24,12 @@ namespace mai.network.Tests
             GatedRecurrentUnit gru = new(1, 5);
 
             double[] loss = gru.Train(trainingSet, k1: 20, k2: 20, epochs: 1);
+        }
+
+        [Fact]
+        public void GeneticOptimizationTes()
+        {
+
         }
 
         private double[] GaussianDistribution(double mean, double stdDev, int length)

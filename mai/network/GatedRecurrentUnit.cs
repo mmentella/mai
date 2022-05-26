@@ -99,18 +99,9 @@ namespace mai.network
                 memory.Add(timestep, (z, r, h, s, o, label, sample));
             }
 
-            Matrix dz;
-            Matrix di;
-            Matrix duz = new(uz.Rows, uz.Columns);
-            Matrix vt = v.Transpose();
-            Matrix ds = new(vt.Rows, 1);
             for (int t = timestep; t > 1; t--)
             {
-                ds += vt * (memory[t].o - memory[t].label);
-                dz = ds.Hadamard(memory[t - 1].s - memory[t].h);
-                di = dz.Hadamard(memory[t].z).Hadamard(1 - memory[t].z);
-
-                duz += di * memory[t].sample;
+                
             }
         }
 
