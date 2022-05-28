@@ -28,6 +28,9 @@ namespace mai.network
         }
 
         public abstract Matrix ParamGradient(Matrix outputGradient);
+
+        public Matrix GetParamGradient() => paramGradient;
+        public Matrix GetParameter() => parameter;
     }
 
     public class WeightMultiply
@@ -55,7 +58,7 @@ namespace mai.network
     public class BiasAdd
         : ParamOperation
     {
-        public BiasAdd(Matrix bias) 
+        public BiasAdd(Matrix bias)
             : base(bias)
         {
             if (bias.Rows == 1) { return; }

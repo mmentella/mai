@@ -75,7 +75,7 @@
             return hadamard;
         }
 
-        public Matrix InitRandom()
+        public Matrix InitRandom(int? seed = null!)
         {
             Random random = new();
             Run(this, d => d = 2 * random.NextDouble() - 1);
@@ -212,12 +212,19 @@
             }
         }
 
-        internal static Matrix Ones(Matrix matrix)
+        public static Matrix Ones(Matrix matrix)
         {
             Matrix ones = new(matrix.Rows, matrix.Columns);
             ones.Run(ones, d => 1d);
 
             return ones;
+        }
+
+        public static void SameShape(Matrix left, Matrix right)
+        {
+            if (left.Rows == right.Rows && left.Columns == right.Columns) { return; }
+
+            throw new InvalidOperationException();
         }
     }
 }
