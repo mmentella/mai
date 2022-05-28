@@ -1,8 +1,6 @@
 ﻿using mai.blas;
-using mai.network;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using Xunit;
 
@@ -38,11 +36,11 @@ namespace mai.network.Tests
                 trainingSet.Add((new Matrix(sin[(s - 5)..s]), new Matrix(sin[(s - 1)..s])));
             }
 
-            var networks = 
+            var networks =
             Enumerable.Range(1, 1000)
                 .Select(i => new GatedRecurrentUnit(1, 5));
 
-            foreach(var network in networks)
+            foreach (var network in networks)
             {
 
             }

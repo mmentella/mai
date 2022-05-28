@@ -1,5 +1,4 @@
 ﻿using FluentAssertions;
-using mai.tensor;
 using System.Diagnostics;
 using Xunit;
 

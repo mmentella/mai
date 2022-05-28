@@ -1,6 +1,4 @@
 ﻿using mai.blas;
-using System.Linq.Expressions;
-using System.Runtime.CompilerServices;
 
 namespace mai.network
 {
@@ -101,7 +99,7 @@ namespace mai.network
 
             for (int t = timestep; t > 1; t--)
             {
-                
+
             }
         }
 
