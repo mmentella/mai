@@ -22,13 +22,13 @@
 
         public Matrix(double[] data)
         {
-            Rows = data.Length;
-            Columns = 1;
+            Columns = data.Length;
+            Rows = 1;
 
             this.data = new double[Rows, Columns];
-            for (int r = 0; r < Rows; r++)
+            for (int c = 0; c < Columns; c++)
             {
-                this.data[r, 0] = data[r];
+                this.data[0, c] = data[c];
             }
         }
 
@@ -88,6 +88,35 @@
             Run(this, m => 1 / (1 + Math.Exp(-m)));
             return this;
         }
+
+        public Matrix SumRows()
+        {
+            double[,] data = new double[1, Columns];
+            for (int r = 0; r < Rows; r++)
+            {
+                for (int c = 0; c < Columns; c++)
+                {
+                    data[0, c] += this.data[r, c];
+                }
+            }
+
+            return new Matrix(data);
+        }
+
+        public Matrix SumColumns()
+        {
+            double[,] data = new double[Rows, 1];
+            for (int r = 0; r < Rows; r++)
+            {
+                for (int c = 0; c < Columns; c++)
+                {
+                    data[r, 0] += this.data[r, c];
+                }
+            }
+
+            return new Matrix(data);
+        }
+
         public Matrix Tanh()
         {
             Run(this, m => (Math.Exp(m) - Math.Exp(-m)) / (Math.Exp(m) + Math.Exp(-m)));
@@ -181,6 +210,14 @@
                     action(left, rigth, r, c);
                 }
             }
+        }
+
+        internal static Matrix Ones(Matrix matrix)
+        {
+            Matrix ones = new(matrix.Rows, matrix.Columns);
+            ones.Run(ones, d => 1d);
+
+            return ones;
         }
     }
 }

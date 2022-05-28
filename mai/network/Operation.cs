@@ -4,9 +4,9 @@ namespace mai.network
 {
     public abstract class Operation
     {
-        private Matrix input;
-        private Matrix output;
-        private Matrix inputGradient;
+        protected Matrix input;
+        protected Matrix output;
+        protected Matrix inputGradient;
 
         public virtual Matrix Forward(Matrix input)
         {
