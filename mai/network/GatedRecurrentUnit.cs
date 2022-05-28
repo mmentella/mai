@@ -44,10 +44,10 @@ namespace mai.network
             br = new Matrix(memoryLength, 1);
             bh = new Matrix(memoryLength, 1);
 
-            z = default;
-            r = default;
-            h = default;
-            o = default;
+            z = default!;
+            r = default!;
+            h = default!;
+            o = default!;
 
             s = new Matrix(memoryLength, 1);
 

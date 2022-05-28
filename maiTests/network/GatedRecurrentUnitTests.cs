@@ -27,9 +27,25 @@ namespace mai.network.Tests
         }
 
         [Fact]
-        public void GeneticOptimizationTes()
+        public void GeneticOptimizationTest()
         {
+            double[] sin = Enumerable.Range(1, 1000)
+                                     .Select(r => Math.Sin(0.1d * r * Math.PI))
+                                     .ToArray();
+            List<(Matrix sample, Matrix label)> trainingSet = new();
+            for (int s = 5; s <= sin.Length; s++)
+            {
+                trainingSet.Add((new Matrix(sin[(s - 5)..s]), new Matrix(sin[(s - 1)..s])));
+            }
 
+            var networks = 
+            Enumerable.Range(1, 1000)
+                .Select(i => new GatedRecurrentUnit(1, 5));
+
+            foreach(var network in networks)
+            {
+
+            }
         }
 
         private double[] GaussianDistribution(double mean, double stdDev, int length)

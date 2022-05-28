@@ -159,6 +159,8 @@
             return dot;
         }
 
+        public static Matrix operator ~(Matrix matrix) => matrix.Transpose();
+
         private void Run(Matrix matrix, Func<double, double> func)
         {
             for (int r = 0; r < Rows; r++)
