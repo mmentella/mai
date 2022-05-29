@@ -117,6 +117,11 @@
             return new Matrix(data);
         }
 
+        public double Sum()
+        {
+            return SumRows().SumColumns()[0, 0];
+        }
+
         public Matrix Tanh()
         {
             Run(this, m => (Math.Exp(m) - Math.Exp(-m)) / (Math.Exp(m) + Math.Exp(-m)));
@@ -188,7 +193,29 @@
             return dot;
         }
 
-        public static Matrix operator ~(Matrix matrix) => matrix.Transpose();
+        public static Matrix operator /(Matrix left, double right)
+        {
+            Matrix result = new(left.Rows, left.Columns);
+
+            for (int r = 0; r < left.Rows; r++)
+            {
+                for (int c = 0; c < left.Columns; c++)
+                {
+                    result[r, c] = left[r, c] / right;
+                }
+            }
+
+            return result;
+        }
+
+        public static Matrix operator *(Matrix left, double right)
+        {
+            left.Run(left,l=> l * right);
+
+            return left;
+        }
+
+        public static Matrix operator *(double left, Matrix right) => right * left;
 
         private void Run(Matrix matrix, Func<double, double> func)
         {
