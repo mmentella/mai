@@ -217,7 +217,7 @@
 
         public static Matrix operator *(double left, Matrix right) => right * left;
 
-        private void Run(Matrix matrix, Func<double, double> func)
+        public void Run(Matrix matrix, Func<double, double> func)
         {
             for (int r = 0; r < Rows; r++)
             {
@@ -228,7 +228,7 @@
             }
         }
 
-        private void Run(Matrix left, Matrix rigth, Action<Matrix, Matrix, int, int> action)
+        public void Run(Matrix left, Matrix rigth, Action<Matrix, Matrix, int, int> action)
         {
             for (int r = 0; r < Rows; r++)
             {
