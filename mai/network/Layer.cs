@@ -4,7 +4,6 @@ namespace mai.network
 {
     public abstract class Layer
     {
-        protected bool first;
         protected Matrix output;
         protected Matrix input;
 
@@ -19,7 +18,7 @@ namespace mai.network
         {
             this.neurons = neurons;
 
-            first = true;
+            First = true;
             parameters = new List<Matrix>();
             parameterGrads = new List<Matrix>();
             operations = new List<Operation>();
@@ -28,14 +27,16 @@ namespace mai.network
             output = default!;
         }
 
+        public bool First;
+
         protected abstract void SetupLayer(Matrix input);
 
         public virtual Matrix Forward(Matrix input)
         {
-            if (first)
+            if (First)
             {
                 SetupLayer(input);
-                first = false;
+                First = false;
             }
 
             this.input = input;

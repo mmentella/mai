@@ -42,6 +42,20 @@
             set => data[r, c] = value;
         }
 
+        public Matrix GetRows(int start, int length)
+        {
+            Matrix rows = new(length, Columns);
+            for (int r = start; r < length; r++)
+            {
+                for (int c = 0; c < Columns; c++)
+                {
+                    rows[r,c] = this[r,c];
+                }
+            }
+
+            return rows;
+        }
+
         public Matrix Transpose()
         {
             Matrix transpose = new(Columns, Rows);
@@ -73,6 +87,36 @@
             }
 
             return hadamard;
+        }
+
+        public void PermuteRows(int[] permutation)
+        {
+            double[,] perm = new double[Rows, Columns];
+            for (int r = 0; r < Rows; r++)
+            {
+                for (int c = 0; c < Columns; c++)
+                {
+                    perm[permutation[r], c] = data[r, c];
+                }
+            }
+
+            Array.Clear(data);
+            data = perm;
+        }
+
+        public void PermuteColumns(int[] permutation)
+        {
+            double[,] perm = new double[Rows, Columns];
+            for (int c = 0; c < Columns; c++)
+            {
+                for (int r = 0; r < Rows; r++)
+                {
+                    perm[r, permutation[c]] = data[r, c];
+                }
+            }
+
+            Array.Clear(data);
+            data = perm;
         }
 
         public Matrix InitRandom(int? seed = null!)

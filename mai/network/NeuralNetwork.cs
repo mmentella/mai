@@ -1,34 +1,30 @@
 ﻿using mai.blas;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace mai.network
 {
     public class NeuralNetwork
     {
-        private readonly IEnumerable<Layer> layers;
-        private readonly Loss loss;
         private readonly int seed;
 
         public NeuralNetwork(IEnumerable<Layer> layers, Loss loss, int seed = 1)
         {
-            this.layers = layers;
-            this.loss = loss;
+            Layers = layers;
+            Loss = loss;
             this.seed = seed;
 
-            foreach(var layer in layers)
+            foreach (var layer in layers)
             {
                 layer.Seed = seed;
             }
         }
 
+        public IEnumerable<Layer> Layers { get; }
+        public Loss Loss { get; }
+
         public Matrix Forward(Matrix batch)
         {
             Matrix forward = batch;
-            foreach (var layer in layers)
+            foreach (var layer in Layers)
             {
                 forward = layer.Forward(forward);
             }
@@ -39,7 +35,7 @@ namespace mai.network
         public void Backward(Matrix lossGradient)
         {
             Matrix gradient = lossGradient;
-            foreach (var layer in layers.Reverse())
+            foreach (var layer in Layers.Reverse())
             {
                 gradient = layer.Backward(gradient);
             }
@@ -59,7 +55,7 @@ namespace mai.network
         {
             get
             {
-                var parameters = layers.Select(l=>l.GetParameters());
+                var parameters = Layers.Select(l => l.GetParameters());
                 return parameters.SelectMany(p => p);
             }
         }
@@ -68,7 +64,7 @@ namespace mai.network
         {
             get
             {
-                var parameters = layers.Select(l => l.ParamGradients());
+                var parameters = Layers.Select(l => l.ParamGradients());
                 return parameters.SelectMany(p => p);
             }
         }
