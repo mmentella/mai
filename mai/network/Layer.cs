@@ -13,6 +13,8 @@ namespace mai.network
         protected readonly List<Matrix> parameterGrads;
         protected readonly List<Operation> operations;
 
+        public int? Seed;
+
         public Layer(int neurons)
         {
             this.neurons = neurons;
@@ -90,13 +92,12 @@ namespace mai.network
         : Layer
     {
         private readonly Operation activation;
-        private readonly int? seed;
 
         public Dense(int neurons, Operation activation = null!, int? seed = null!)
             : base(neurons)
         {
             this.activation = activation ?? new Sigmoid();
-            this.seed = seed;
+            Seed = seed;
         }
 
         protected override void SetupLayer(Matrix input)
@@ -104,10 +105,10 @@ namespace mai.network
             parameters.Clear();
 
             Matrix weights = new(input.Columns, neurons);
-            weights.InitRandom(seed);
+            weights.InitRandom(Seed);
 
             Matrix bias = new(1, neurons);
-            bias.InitRandom(seed);
+            bias.InitRandom(Seed);
 
             parameters.Add(weights);
             parameters.Add(bias);
