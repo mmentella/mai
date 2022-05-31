@@ -1,10 +1,7 @@
-﻿using mai.tensor;
-using FluentAssertions;
+﻿using FluentAssertions;
+using System.Diagnostics;
 using System.Linq;
 using Xunit;
-using System.Collections.Generic;
-using System;
-using System.Diagnostics;
 
 namespace mai.tensor.Tests
 {
@@ -93,8 +90,8 @@ namespace mai.tensor.Tests
                                       .ToArray();
 
             Tensor tensor = data.AsTensor(2, 3, 4);
-            Tensor reshape = tensor.Reshape(4,2,3);
-            Tensor transpose = tensor.Transpose(2,0,1);
+            Tensor reshape = tensor.Reshape(4, 2, 3);
+            Tensor transpose = tensor.Transpose(2, 0, 1);
 
             Debug.WriteLine(tensor.Print());
             Debug.WriteLine(reshape.Print());
