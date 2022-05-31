@@ -1,5 +1,7 @@
 ﻿namespace mai.blas
 {
+    using FluentAssertions;
+
     public class Matrix
     {
         private double[,] data;
@@ -32,8 +34,25 @@
             }
         }
 
-        public int Rows { get; }
-        public int Columns { get; }
+        public Matrix(double[] data, int rows, int columns)
+        {
+            data.Length.Should().Be(rows * columns);
+
+            Rows = rows;
+            Columns = columns;
+
+            this.data = new double[Rows, Columns];
+            for (int r = 0; r < Rows; r++)
+            {
+                for (int c = 0; c < Columns; c++)
+                {
+                    this.data[r, c] = data[r * c + c];
+                }
+            }
+        }
+
+        public int Rows { get; protected set; }
+        public int Columns { get; protected set; }
         public int Length => Rows * Columns;
 
         public double this[int r, int c]
@@ -49,7 +68,7 @@
             {
                 for (int c = 0; c < Columns; c++)
                 {
-                    rows[r,c] = this[r,c];
+                    rows[r, c] = this[r, c];
                 }
             }
 
@@ -121,7 +140,7 @@
 
         public Matrix InitRandom(int? seed = null!)
         {
-            Random random = new();
+            Random random = seed == null ? new() : new(seed.Value);
             Run(this, d => d = 2 * random.NextDouble() - 1);
 
             return this;
@@ -166,6 +185,20 @@
             return SumRows().SumColumns()[0, 0];
         }
 
+        private Matrix Broadcast(int rows)
+        {
+            double[,] data = new double[rows, Columns];
+            for (int r = 0; r < rows; r++)
+            {
+                for (int c = 0; c < Columns; c++)
+                {
+                    data[r, c] = this.data[0, c];
+                }
+            }
+
+            return new(data);
+        }
+
         public Matrix Tanh()
         {
             Run(this, m => (Math.Exp(m) - Math.Exp(-m)) / (Math.Exp(m) + Math.Exp(-m)));
@@ -174,22 +207,33 @@
 
         public string Print() => data.Print();
 
-        public static Matrix operator +(Matrix left, Matrix rigth)
+        public static Matrix operator +(Matrix left, Matrix right)
         {
+            left.Columns.Should().Be(right.Columns);
+
+            if (left.Rows < right.Rows) { return right + left; }
+
+            if (left.Rows > 1 && right.Rows == 1)
+            {
+                right = right.Broadcast(left.Rows);
+            }
+
+            left.Rows.Should().Be(right.Rows);
+
             Matrix add = new(left.Rows, left.Columns);
 
             for (int r = 0; r < left.Rows; r++)
             {
                 for (int c = 0; c < left.Columns; c++)
                 {
-                    add[r, c] = left[r, c] + rigth[r, c];
+                    add[r, c] = left[r, c] + right[r, c];
                 }
             }
 
             return add;
         }
 
-        public static Matrix operator -(Matrix left, Matrix rigth)
+        public static Matrix operator -(Matrix left, Matrix right)
         {
             Matrix less = new(left.Rows, left.Columns);
 
@@ -197,31 +241,33 @@
             {
                 for (int c = 0; c < left.Columns; c++)
                 {
-                    less[r, c] = left[r, c] - rigth[r, c];
+                    less[r, c] = left[r, c] - right[r, c];
                 }
             }
 
             return less;
         }
 
-        public static Matrix operator -(int left, Matrix rigth)
+        public static Matrix operator -(int left, Matrix right)
         {
-            Matrix less = new(rigth.Rows, rigth.Columns);
+            Matrix less = new(right.Rows, right.Columns);
 
-            for (int r = 0; r < rigth.Rows; r++)
+            for (int r = 0; r < right.Rows; r++)
             {
-                for (int c = 0; c < rigth.Columns; c++)
+                for (int c = 0; c < right.Columns; c++)
                 {
-                    less[r, c] = left - rigth[r, c];
+                    less[r, c] = left - right[r, c];
                 }
             }
 
             return less;
         }
 
-        public static Matrix operator *(Matrix left, Matrix rigth)
+        public static Matrix operator *(Matrix left, Matrix right)
         {
-            Matrix dot = new(left.Rows, rigth.Columns);
+            left.Columns.Should().Be(right.Rows);
+
+            Matrix dot = new(left.Rows, right.Columns);
 
             for (int r = 0; r < dot.Rows; r++)
             {
@@ -229,7 +275,7 @@
                 {
                     for (int k = 0; k < left.Columns; k++)
                     {
-                        dot[r, c] += left[r, k] * rigth[k, c];
+                        dot[r, c] += left[r, k] * right[k, c];
                     }
                 }
             }
@@ -254,7 +300,7 @@
 
         public static Matrix operator *(Matrix left, double right)
         {
-            left.Run(left,l=> l * right);
+            left.Run(left, l => l * right);
 
             return left;
         }
@@ -272,13 +318,13 @@
             }
         }
 
-        public void Run(Matrix left, Matrix rigth, Action<Matrix, Matrix, int, int> action)
+        public void Run(Matrix left, Matrix right, Action<Matrix, Matrix, int, int> action)
         {
             for (int r = 0; r < Rows; r++)
             {
                 for (int c = 0; c < Columns; c++)
                 {
-                    action(left, rigth, r, c);
+                    action(left, right, r, c);
                 }
             }
         }

@@ -41,7 +41,7 @@ namespace mai.network
 
         public override Matrix Output()
         {
-            return parameter * input;
+            return input * parameter;
         }
 
         public override Matrix ParamGradient(Matrix outputGradient)
@@ -88,7 +88,8 @@ namespace mai.network
     {
         public override Matrix InputGradient(Matrix outputGradient)
         {
-            inputGradient = output * (1 - output) * outputGradient;
+            var sigmoidGradient = output.Hadamard(1 - output);
+            inputGradient = sigmoidGradient.Hadamard(outputGradient);
 
             return inputGradient;
         }

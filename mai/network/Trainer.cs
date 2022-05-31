@@ -56,17 +56,18 @@ namespace mai.network
                 samples.PermuteRows(permutation);
                 labels.PermuteRows(permutation);
 
+                double loss;
                 var batches = GenerateBatches(samples, labels, batchSize);
                 foreach (var (sample, label) in batches)
                 {
-                    optimizer.Network.Train(sample, label);
+                    loss = optimizer.Network.Train(sample, label);
                     optimizer.Step();
                 }
 
                 if ((e + 1) % checkStep == 0)
                 {
                     var predictions = optimizer.Network.Forward(samplesTest);
-                    var loss = optimizer.Network.Loss.Forward(predictions, labelsTest);
+                    loss = optimizer.Network.Loss.Forward(predictions, labelsTest);
 
                     Console.WriteLine($"Validation loss after {e + 1} epochs is {loss}");
                 }

@@ -11,8 +11,8 @@ namespace mai.network.Tests
         [Fact()]
         public void TrainTest()
         {
-            double[] sin = Enumerable.Range(1, 1000)
-                                     .Select(r => Math.Sin(0.1d * r * Math.PI))
+            double[] sin = Enumerable.Range(0, 1024)
+                                     .Select(r => Math.Sin(0.03125d * r * Math.PI))
                                      .ToArray();
             List<(Matrix sample, Matrix label)> trainingSet = new();
             for (int s = 5; s <= sin.Length; s++)

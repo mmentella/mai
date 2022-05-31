@@ -44,9 +44,9 @@ namespace mai.network
         public double Train(Matrix samples, Matrix labels)
         {
             Matrix prediction = Forward(samples);
-            double loss = this.loss.Forward(prediction, labels);
+            double loss = Loss.Forward(prediction, labels);
 
-            Backward(this.loss.Backward());
+            Backward(Loss.Backward());
 
             return loss;
         }
