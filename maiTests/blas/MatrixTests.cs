@@ -17,6 +17,9 @@ namespace mai.blas.Tests
         {
             Matrix matrix = new(new double[,] { { 1, 2, 3 }, { 4, 5, 6 } });
             Matrix transpose = matrix.Transpose();
+
+            Debug.WriteLine(matrix.Print());
+            Debug.WriteLine(transpose.Print());
         }
 
         [Fact()]

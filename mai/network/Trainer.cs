@@ -1,6 +1,7 @@
 ﻿using mai.blas;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -53,8 +54,8 @@ namespace mai.network
                 int[] permutation = Enumerable.Range(0, samples.Rows)
                                               .OrderBy(k => random.Next())
                                               .ToArray();
-                samples.PermuteRows(permutation);
-                labels.PermuteRows(permutation);
+                samples = samples.PermuteRows(permutation);
+                labels = labels.PermuteRows(permutation);
 
                 double loss;
                 var batches = GenerateBatches(samples, labels, batchSize);
@@ -69,9 +70,11 @@ namespace mai.network
                     var predictions = optimizer.Network.Forward(samplesTest);
                     loss = optimizer.Network.Loss.Forward(predictions, labelsTest);
 
-                    Console.WriteLine($"Validation loss after {e + 1} epochs is {loss}");
+                    Debug.WriteLine($"Validation loss after {e + 1} epochs is {loss}");
                 }
             }
+
+            Debug.WriteLine($"Training ended.");
         }
     }
 }

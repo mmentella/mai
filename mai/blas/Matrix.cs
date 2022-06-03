@@ -79,24 +79,22 @@
         {
             Matrix transpose = new(Columns, Rows);
 
-            Run(this, transpose, (l, t, r, c) => t[c, r] = l[r, c]);
+            for (int r = 0; r < Rows; r++)
+            {
+                for (int c = 0; c < Columns; c++)
+                {
+                    transpose[c, r] = this[r, c];
+                }
+            }
 
             return transpose;
         }
 
-        public Matrix Square()
-        {
-            Matrix square = new(Rows, Columns);
-
-            Run(this, square, (l, s, r, c) => s[r, c] = l[r, c] * l[r, c]);
-
-            return square;
-        }
+        public Matrix Square() => Run(this, d => d * d);
 
         public Matrix Hadamard(Matrix matrix)
         {
-            Matrix hadamard = new(Rows, Columns);
-
+            double[,] hadamard = new double[Rows, Columns];
             for (int r = 0; r < Rows; r++)
             {
                 for (int c = 0; c < Columns; c++)
@@ -105,10 +103,10 @@
                 }
             }
 
-            return hadamard;
+            return new(hadamard);
         }
 
-        public void PermuteRows(int[] permutation)
+        public Matrix PermuteRows(int[] permutation)
         {
             double[,] perm = new double[Rows, Columns];
             for (int r = 0; r < Rows; r++)
@@ -119,11 +117,10 @@
                 }
             }
 
-            Array.Clear(data);
-            data = perm;
+            return new(perm);
         }
 
-        public void PermuteColumns(int[] permutation)
+        public Matrix PermuteColumns(int[] permutation)
         {
             double[,] perm = new double[Rows, Columns];
             for (int c = 0; c < Columns; c++)
@@ -134,23 +131,18 @@
                 }
             }
 
-            Array.Clear(data);
-            data = perm;
+            return new(perm);
         }
 
         public Matrix InitRandom(int? seed = null!)
         {
             Random random = seed == null ? new() : new(seed.Value);
-            Run(this, d => d = 2 * random.NextDouble() - 1);
+            Run(d => d = 2 * random.NextDouble() - 1);
 
             return this;
         }
 
-        public Matrix Sigmoid()
-        {
-            Run(this, m => 1 / (1 + Math.Exp(-m)));
-            return this;
-        }
+        public Matrix Sigmoid() => Run(this, d => 1d / (1d + Math.Exp(-d)));
 
         public Matrix SumRows()
         {
@@ -180,9 +172,29 @@
             return new Matrix(data);
         }
 
-        public double Sum()
+        public double Sum() => SumRows().SumColumns()[0, 0];
+
+        public double Mean() => Sum() / Length;
+
+        public double Variance()
         {
-            return SumRows().SumColumns()[0, 0];
+            double mean = Mean();
+            double variance = (mean - this).Square().Sum() / Length;
+
+            return variance;
+        }
+
+        public double StandardDeviation() => Math.Sqrt(Variance());
+
+        public Matrix StandardScale()
+        {
+            double mean = Mean();
+            Matrix mean0 = mean - this;
+
+            double variance = mean0.Square().Sum() / Length;
+            double std = Math.Sqrt(variance);
+
+            return mean0 / std;
         }
 
         private Matrix Broadcast(int rows)
@@ -199,10 +211,34 @@
             return new(data);
         }
 
-        public Matrix Tanh()
+        public Matrix Tanh() => Run(this, d => (Math.Exp(d) - Math.Exp(-d)) / (Math.Exp(d) + Math.Exp(-d)));
+
+        public Matrix Log() => Run(this, d => Math.Log(d));
+
+        public Matrix Softmax(double? min, double? max)
         {
-            Run(this, m => (Math.Exp(m) - Math.Exp(-m)) / (Math.Exp(m) + Math.Exp(-m)));
-            return this;
+            min ??= double.MinValue;
+            max ??= double.MaxValue;
+
+            double exp;
+            double rowSum;
+            double[,] softmax = new double[Rows, Columns];
+            for (int r = 0; r < Rows; r++)
+            {
+                rowSum = 0;
+                for (int c = 0; c < Columns; c++)
+                {
+                    exp = Math.Exp(this[r, c]);
+                    rowSum += exp;
+                    softmax[r, c] = exp;
+                }
+                for (int c = 0; c < Columns; c++)
+                {
+                    softmax[r, c] = Math.Min(max.Value, Math.Max(min.Value, softmax[r, c] / rowSum));
+                }
+            }
+
+            return new(softmax);
         }
 
         public string Print() => data.Print();
@@ -248,7 +284,7 @@
             return less;
         }
 
-        public static Matrix operator -(int left, Matrix right)
+        public static Matrix operator -(double left, Matrix right)
         {
             Matrix less = new(right.Rows, right.Columns);
 
@@ -298,50 +334,61 @@
             return result;
         }
 
-        public static Matrix operator *(Matrix left, double right)
-        {
-            left.Run(left, l => l * right);
-
-            return left;
-        }
+        public static Matrix operator *(Matrix left, double right) => left.Run(left, l => l * right);
 
         public static Matrix operator *(double left, Matrix right) => right * left;
 
-        public void Run(Matrix matrix, Func<double, double> func)
+        public Matrix Run(Matrix matrix, Func<double, double> func)
+        {
+            double[,] run = new double[matrix.Rows, matrix.Columns];
+            for (int r = 0; r < Rows; r++)
+            {
+                for (int c = 0; c < Columns; c++)
+                {
+                    run[r, c] = func(matrix[r, c]);
+                }
+            }
+
+            return new(run);
+        }
+
+        public void Run(Func<double, double> func)
         {
             for (int r = 0; r < Rows; r++)
             {
                 for (int c = 0; c < Columns; c++)
                 {
-                    matrix[r, c] = func(matrix[r, c]);
+                    this[r, c] = func(this[r, c]);
                 }
             }
         }
 
-        public void Run(Matrix left, Matrix right, Action<Matrix, Matrix, int, int> action)
+        public Matrix Run(Matrix left, Matrix right, Func<Matrix, Matrix, int, int, double> action)
         {
+            double[,] run = new double[Rows, Columns];
             for (int r = 0; r < Rows; r++)
             {
                 for (int c = 0; c < Columns; c++)
                 {
-                    action(left, right, r, c);
+                    run[r, c] = action(left, right, r, c);
                 }
             }
+
+            return new(run);
         }
 
         public static Matrix Ones(Matrix matrix)
         {
             Matrix ones = new(matrix.Rows, matrix.Columns);
-            ones.Run(ones, d => 1d);
+            ones.Run(d => 1d);
 
             return ones;
         }
 
         public static void SameShape(Matrix left, Matrix right)
         {
-            if (left.Rows == right.Rows && left.Columns == right.Columns) { return; }
-
-            throw new InvalidOperationException();
+            left.Rows.Should().Be(right.Rows);
+            left.Columns.Should().Be(right.Columns);
         }
     }
 }
