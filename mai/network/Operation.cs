@@ -1,4 +1,5 @@
 ﻿using mai.blas;
+using FluentAssertions;
 
 namespace mai.network
 {
@@ -33,9 +34,8 @@ namespace mai.network
 
         protected virtual void AssertSameShape(Matrix left, Matrix right)
         {
-            if (left.Rows == right.Rows && left.Columns == right.Columns) { return; }
-
-            throw new InvalidOperationException();
+            left.Rows.Should().Be(right.Rows);
+            left.Columns.Should().Be(right.Columns);
         }
     }
 }

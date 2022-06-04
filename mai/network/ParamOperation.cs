@@ -100,6 +100,23 @@ namespace mai.network
         }
     }
 
+    public class Tanh
+        : Operation
+    {
+        public override Matrix InputGradient(Matrix outputGradient)
+        {
+            var tanhGradient = 1 - output.Square();
+            inputGradient = tanhGradient.Hadamard(outputGradient);
+
+            return inputGradient;
+        }
+
+        public override Matrix Output()
+        {
+            return input.Tanh();
+        }
+    }
+
     public class Linear
         : Operation
     {

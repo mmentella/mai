@@ -35,7 +35,7 @@ namespace mai
                                          .Append(".############")
                                          .ToString();
             int maxLen = max.ToString(format)
-                            .TrimStart('0')
+                            //.TrimStart('0')
                             .Length;
             stringBuilder.Clear();
             string placeholder = stringBuilder.Append(' ', maxLen)
@@ -47,8 +47,7 @@ namespace mai
 
             int[] index = new int[rank];
             string value = placeholder + (values[Offset(index)] == 0 ? "0" :
-                                          values[Offset(index)].ToString(format)
-                                                       .TrimStart('0'));
+                                          values[Offset(index)].ToString(format));
             value = value[^maxLen..];
             stringBuilder.Append(value);
 
@@ -84,8 +83,7 @@ namespace mai
                 else { stringBuilder.Append(' '); }
 
                 value = placeholder + (values[Offset(index)] == 0 ? "0" :
-                                       values[Offset(index)].ToString(format)
-                                                            .TrimStart('0'));
+                                       values[Offset(index)].ToString(format));
                 value = value[^maxLen..];
                 stringBuilder.Append(value);
 

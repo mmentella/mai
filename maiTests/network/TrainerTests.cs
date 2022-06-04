@@ -16,7 +16,7 @@ namespace mai.network.Tests
         {
             int seed = 20220529;
             Random random = new(seed);
-            NeuralNetwork network = new(new Layer[] { new Dense(32, new Sigmoid(), seed),
+            NeuralNetwork network = new(new Layer[] { new Dense(32, new Tanh(), seed),
                                                       new Dense(32, new Sigmoid(), seed),
                                                       new Dense(32, new Linear(), seed)
                                                     },
