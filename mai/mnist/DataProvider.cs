@@ -11,30 +11,60 @@ namespace mai.mnist
         public static string trainingLabelsFilename = "mnist/train-labels.idx1-ubyte";
         public static string testLabelsFilename = "mnist/t10k-labels.idx1-ubyte";
 
-        public static IEnumerable<(Matrix image, Matrix label)> BuildMNIST()
+        public static Matrix ReadSamples(string filename)
         {
-            using FileStream imageFileStream = new(trainingImagesFilename, FileMode.Open);
-            using FileStream labelFileStream = new(trainingLabelsFilename, FileMode.Open);
-            using BinaryReader imageReader = new(imageFileStream);
-            using BinaryReader labelReader = new(labelFileStream);
+            using FileStream sampleFileStream = new(filename, FileMode.Open);
+            using BinaryReader reader = new(sampleFileStream);
 
-            int magicNumber = imageReader.ReadBigInt32();
-            int numberOfImages = imageReader.ReadBigInt32();
-            int rows = imageReader.ReadBigInt32();
-            int columns = imageReader.ReadBigInt32();
+            int magicNumber = reader.ReadBigInt32();
+            int numberOfImages = reader.ReadBigInt32();
+            int rows = reader.ReadBigInt32();
+            int columns = reader.ReadBigInt32();
 
-            int labelMagic = labelReader.ReadBigInt32();
-            int numberOfLabels = labelReader.ReadBigInt32();
-
-            Matrix image;
-            Matrix label;
+            double[] image;
+            double[,] data = new double[numberOfImages, rows * columns];
             for (int i = 0; i < numberOfImages; i++)
             {
-                image = imageReader.ReadImage(rows, columns);
-                label = labelReader.ReadLabel();
-
-                yield return (image, label);
+                image = reader.ReadImage(rows, columns);
+                for (int l = 0; l < rows * columns; l++)
+                {
+                    data[i, l] = image[l];
+                }
             }
+
+            return new(data);
+        }
+
+        public static Matrix ReadLabels(string filename)
+        {
+            using FileStream sampleFileStream = new(filename, FileMode.Open);
+            using BinaryReader reader = new(sampleFileStream);
+
+            int labelMagic = reader.ReadBigInt32();
+            int numberOfLabels = reader.ReadBigInt32();
+
+            double[] label;
+            double[,] data = new double[numberOfLabels, 10];
+            for (int i = 0; i < numberOfLabels; i++)
+            {
+                label = reader.ReadLabel();
+                for (int l = 0; l < 10; l++)
+                {
+                    data[i, l] = label[l];
+                }
+            }
+
+            return new(data);
+        }
+
+        public static (Matrix samples, Matrix labels, Matrix testSamples, Matrix testLabels) BuildMNIST()
+        {
+            Matrix samples = ReadSamples(trainingImagesFilename);
+            Matrix labels = ReadLabels(trainingLabelsFilename);
+            Matrix testSamples = ReadSamples(testImagesFilename);
+            Matrix testLabels = ReadLabels(testLabelsFilename);
+
+            return (samples, labels, testSamples, testLabels);
         }
 
         public static int ReadBigInt32(this BinaryReader br)
@@ -44,22 +74,22 @@ namespace mai.mnist
             return BitConverter.ToInt32(bytes, 0);
         }
 
-        public static Matrix ReadImage(this BinaryReader br, int rows, int columns)
+        public static double[] ReadImage(this BinaryReader br, int rows, int columns)
         {
             var bytes = br.ReadBytes(rows * columns);
             double[] data = bytes.Select(b => (double)b).ToArray();
 
-            return new Matrix(data, 1, rows * columns);
+            return data;
         }
 
-        public static Matrix ReadLabel(this BinaryReader br)
+        public static double[] ReadLabel(this BinaryReader br)
         {
             var label = (int)br.ReadByte();
 
             double[] data = new double[10];
             data[label] = 1;
 
-            return new(data);
+            return data;
         }
     }
 }

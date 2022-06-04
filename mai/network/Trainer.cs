@@ -58,11 +58,15 @@ namespace mai.network
                 labels = labels.PermuteRows(permutation);
 
                 double loss;
+                int batchCount = 0;
                 var batches = GenerateBatches(samples, labels, batchSize);
                 foreach (var (sample, label) in batches)
                 {
                     loss = optimizer.Network.Train(sample, label);
                     optimizer.Step();
+
+                    batchCount++;
+                    Debug.WriteLine($"Batch: {batchCount} - running loss: {loss}");
                 }
 
                 if ((e + 1) % checkStep == 0)

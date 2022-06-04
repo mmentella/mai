@@ -37,5 +37,16 @@ namespace mai.blas.Tests
             Debug.WriteLine(square.Print());
             Debug.WriteLine(hadamard.Print());
         }
+
+        [Fact()]
+        public void SoftmaxTest()
+        {
+            Matrix matrix = new(new double[,] { { 1, 0.5, 0.2, 3 }, { 1, -1, 7, 3 }, { 2, 12, 13, 3 } });
+            Matrix softmax = matrix.Softmax();
+
+            Debug.WriteLine(matrix.Print());
+            Debug.WriteLine(softmax.Print());
+            Debug.WriteLine(softmax.Sum());
+        }
     }
 }

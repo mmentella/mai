@@ -1,9 +1,4 @@
 ﻿using mai.blas;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace mai.network
 {
@@ -11,23 +6,45 @@ namespace mai.network
         : Loss
     {
         private readonly double epsilon;
-        private readonly bool singleOutput;
+        private bool singleOutput;
         private Matrix softmaxPrediction;
 
-        public SoftmaxCrossEntropyLoss(double epsilon = 1e-9)
+        public SoftmaxCrossEntropyLoss(double epsilon = 0.000000001)
         {
             this.epsilon = epsilon;
             singleOutput = false;
+
+            softmaxPrediction = default;
         }
 
-        public override Matrix InputGradient() => softmaxPrediction - target;
+        public override Matrix InputGradient()
+        {
+            if (singleOutput)
+            {
+                return softmaxPrediction - target;
+            }
+            else
+            {
+                return (softmaxPrediction - target) / prediction.Rows;
+            }
+        }
 
         public override double Output()
         {
-            softmaxPrediction = prediction.Softmax(epsilon, 1 - epsilon);
-            var softmaxCrossEntropy = softmaxPrediction.Log().Hadamard(-1d * target) - (1 - target).Hadamard((1 - softmaxPrediction).Log());
+            if (target.Columns == 1) { singleOutput = true; }
 
-            return softmaxCrossEntropy.Sum();
+            if (singleOutput)
+            {
+                prediction = prediction.Normalize();
+                target = target.Normalize();
+            }
+
+            softmaxPrediction = prediction.Softmax(epsilon, 1 - epsilon);
+
+            Matrix softmaxCrossEntropy = softmaxPrediction.Log().Hadamard(-1d * target) -
+                                         (1d - softmaxPrediction).Log().Hadamard(1d - target);
+
+            return softmaxCrossEntropy.Sum() / prediction.Rows;
         }
     }
 }

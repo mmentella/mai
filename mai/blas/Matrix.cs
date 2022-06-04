@@ -1,8 +1,9 @@
 ﻿namespace mai.blas
 {
     using FluentAssertions;
+    using System.Runtime.CompilerServices;
 
-    public class Matrix
+    public struct Matrix
     {
         private double[,] data;
 
@@ -51,13 +52,16 @@
             }
         }
 
-        public int Rows { get; protected set; }
-        public int Columns { get; protected set; }
+        public int Rows { get; set; }
+        public int Columns { get; set; }
         public int Length => Rows * Columns;
 
         public double this[int r, int c]
         {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => data[r, c];
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set => data[r, c] = value;
         }
 
@@ -134,6 +138,27 @@
             return new(perm);
         }
 
+        public Matrix ConcatenateColumns(Matrix other)
+        {
+            Rows.Should().Be(other.Rows);
+
+            int columns = Columns + other.Columns;
+            double[,] data = new double[Rows, columns];
+            for (int r = 0; r < Rows; r++)
+            {
+                for (int c = 0; c < Columns; c++)
+                {
+                    data[r,c] = this[r,c];
+                }
+                for (int c = 0; c < other.Columns; c++)
+                {
+                    data[r, Columns + c] = other[r, c];
+                }
+            }
+
+            return new(data);
+        }
+
         public Matrix InitRandom(int? seed = null!)
         {
             Random random = seed == null ? new() : new(seed.Value);
@@ -197,6 +222,18 @@
             return mean0 / std;
         }
 
+        public Matrix Normalize()
+        {
+            Matrix other = 1 - this;
+            
+            return ConcatenateColumns(other);
+        }
+
+        public Matrix Unnormalize()
+        {
+            return GetRows(0, 1);
+        }
+
         private Matrix Broadcast(int rows)
         {
             double[,] data = new double[rows, Columns];
@@ -215,30 +252,40 @@
 
         public Matrix Log() => Run(this, d => Math.Log(d));
 
-        public Matrix Softmax(double? min, double? max)
+        public Matrix LogSumExp()
+        {
+            double sum;
+            double[,] data = new double[Rows, 1];
+            for (int r = 0; r < Rows; r++)
+            {
+                sum = 0;
+                for (int c = 0; c < Columns; c++)
+                {
+                    sum += Math.Exp(this[r, c]);
+                }
+                data[r, 0] = Math.Log(sum);
+            }
+
+            return new(data);
+        }
+
+        public Matrix Softmax(double? min = null, double? max = null)
         {
             min ??= double.MinValue;
             max ??= double.MaxValue;
 
-            double exp;
-            double rowSum;
-            double[,] softmax = new double[Rows, Columns];
+            Matrix logsumexp = LogSumExp();
+
+            double[,] data = new double[Rows, Columns];
             for (int r = 0; r < Rows; r++)
             {
-                rowSum = 0;
                 for (int c = 0; c < Columns; c++)
                 {
-                    exp = Math.Exp(this[r, c]);
-                    rowSum += exp;
-                    softmax[r, c] = exp;
-                }
-                for (int c = 0; c < Columns; c++)
-                {
-                    softmax[r, c] = Math.Min(max.Value, Math.Max(min.Value, softmax[r, c] / rowSum));
+                    data[r, c] = Math.Min(max.Value, Math.Max(min.Value, Math.Exp(this[r, c] - logsumexp[r, 0])));
                 }
             }
 
-            return new(softmax);
+            return new(data);
         }
 
         public string Print() => data.Print();

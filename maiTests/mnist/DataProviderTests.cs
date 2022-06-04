@@ -1,11 +1,4 @@
 ﻿using Xunit;
-using mai.mnist;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using mai.blas;
 
 namespace mai.mnist.Tests
 {
@@ -14,8 +7,7 @@ namespace mai.mnist.Tests
         [Fact()]
         public void DownloadMNISTTest()
         {
-            IEnumerable<(Matrix image, Matrix label)> trainingSet = DataProvider.BuildMNIST();
-            var array = trainingSet.ToArray();
+            var mnist = DataProvider.BuildMNIST();
         }
     }
 }
