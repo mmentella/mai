@@ -17,6 +17,8 @@ namespace mai.network
         public override Matrix Backward(Matrix outputGradient)
         {
             AssertSameShape(output, outputGradient);
+            inputGradient?.FreeMemory();
+            paramGradient?.FreeMemory();
 
             inputGradient = InputGradient(outputGradient);
             paramGradient = ParamGradient(outputGradient);

@@ -11,6 +11,9 @@ namespace mai.network
 
         public virtual Matrix Forward(Matrix input)
         {
+            this.input?.FreeMemory();
+            output?.FreeMemory();
+
             this.input = input;
             output = Output();
 
@@ -20,6 +23,7 @@ namespace mai.network
         public virtual Matrix Backward(Matrix outputGradient)
         {
             AssertSameShape(output, outputGradient);
+            inputGradient?.FreeMemory();
 
             inputGradient = InputGradient(outputGradient);
 

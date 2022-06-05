@@ -59,14 +59,22 @@ namespace mai.network
 
                 double loss;
                 int batchCount = 0;
+                Stopwatch sw = new();
                 var batches = GenerateBatches(samples, labels, batchSize);
                 foreach (var (sample, label) in batches)
                 {
+                    sw.Reset();
+                    sw.Start();
+
                     loss = optimizer.Network.Train(sample, label);
                     optimizer.Step();
+                    
+                    sw.Stop();
 
                     batchCount++;
-                    Debug.WriteLine($"Batch: {batchCount} - running loss: {loss}");
+                    Debug.WriteLine($"Batch: {batchCount} - running loss: {loss}. Total Seconds: {sw.Elapsed.TotalSeconds}, Total Memory: {GC.GetTotalMemory(true)}");
+
+                    GC.Collect();
                 }
 
                 if ((e + 1) % checkStep == 0)
