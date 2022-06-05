@@ -22,7 +22,7 @@ namespace mai.mnist
             int columns = reader.ReadBigInt32();
 
             double[] image;
-            double[,] data = new double[numberOfImages, rows * columns];
+            Matrix data = new Matrix(numberOfImages, rows * columns);
             for (int i = 0; i < numberOfImages; i++)
             {
                 image = reader.ReadImage(rows, columns);
@@ -32,7 +32,7 @@ namespace mai.mnist
                 }
             }
 
-            return new(data);
+            return data;
         }
 
         public static Matrix ReadLabels(string filename)
@@ -44,7 +44,7 @@ namespace mai.mnist
             int numberOfLabels = reader.ReadBigInt32();
 
             double[] label;
-            double[,] data = new double[numberOfLabels, 10];
+            Matrix data = new Matrix(numberOfLabels, 10);
             for (int i = 0; i < numberOfLabels; i++)
             {
                 label = reader.ReadLabel();
@@ -54,7 +54,7 @@ namespace mai.mnist
                 }
             }
 
-            return new(data);
+            return data;
         }
 
         public static (Matrix samples, Matrix labels, Matrix testSamples, Matrix testLabels) BuildMNIST()
