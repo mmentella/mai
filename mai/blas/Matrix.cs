@@ -2,12 +2,13 @@
 {
     using FluentAssertions;
     using System.Buffers;
-    using System.Diagnostics;
+    using System.Numerics;
     using System.Runtime.CompilerServices;
+    using System.Runtime.InteropServices;
 
     public class Matrix
     {
-        private double[] data;
+        protected double[] data;
 
         public Matrix(int rows, int columns)
         {
@@ -16,13 +17,27 @@
 
             data = ArrayPool<double>.Shared.Rent(Rows * Columns);
             Array.Fill(data, 0);
-
-            //data = new double[rows * columns];
         }
 
-        public int Rows { get; set; }
-        public int Columns { get; set; }
+        public Matrix(double[] data)
+        {
+            Rows = 1;
+            Columns = data.Length;
+
+            this.data = data;
+        }
+
+        public int Rows { get; protected set; }
+        public int Columns { get; protected set; }
         public int Length => Rows * Columns;
+
+        public void Reshape(int rows, int columns)
+        {
+            data.Length.Should().Be(rows * columns);
+
+            Rows = rows;
+            Columns = columns;
+        }
 
         public double this[int r, int c]
         {
@@ -68,13 +83,13 @@
         public Matrix Hadamard(Matrix matrix)
         {
             Matrix hadamard = new(Rows, Columns);
-            Parallel.For(0, Rows, r =>
+            for (int c = 0; c < Columns; c++)
             {
-                Parallel.For(0, Columns, c =>
+                for (int r = 0; r < Rows; r++)
                 {
                     hadamard[r, c] = this[r, c] * matrix[r, c];
-                });
-            });
+                }
+            }
 
             return hadamard;
         }
@@ -82,13 +97,13 @@
         public Matrix PermuteRows(int[] permutation)
         {
             Matrix perm = new(Rows, Columns);
-            Parallel.For(0, Rows, r =>
+            for (int c = 0; c < Columns; c++)
             {
-                Parallel.For(0, Columns, c =>
+                for (int r = 0; r < Rows; r++)
                 {
                     perm[permutation[r], c] = this[r, c];
-                });
-            });
+                }
+            }
 
             return perm;
         }
@@ -141,13 +156,13 @@
         public Matrix SumRows()
         {
             Matrix data = new(1, Columns);
-            Parallel.For(0, Rows, r =>
+            for (int r = 0; r < Rows; r++)
             {
                 for (int c = 0; c < Columns; c++)
                 {
                     data[0, c] += this[r, c];
                 }
-            });
+            }
 
             return data;
         }
@@ -155,20 +170,40 @@
         public Matrix SumColumns()
         {
             Matrix data = new(Rows, 1);
-            Parallel.For(0, Columns, c =>
+            for (int c = 0; c < Columns; c++)
             {
                 for (int r = 0; r < Rows; r++)
                 {
                     data[r, 0] += this[r, c];
                 }
-            });
+            }
 
             return data;
         }
 
         public double Sum() => SumRows().SumColumns()[0, 0];
 
+        public double SIMDSum()
+        {
+            double sum = 0;
+            var vectors = MemoryMarshal.Cast<double, Vector<double>>(data);
+            var vectorSum = Vector<double>.Zero;
+
+            foreach (var vector in vectors) { vectorSum += vector; }
+
+            for (var index = 0; index < Vector<double>.Count; index++) { sum += vectorSum[index]; }
+
+
+            var count = data.Length % Vector<double>.Count;
+            var source = data.AsSpan().Slice(data.Length - count, count);
+
+            foreach (var item in source) { sum += item; }
+
+            return sum;
+        }
+
         public double Mean() => Sum() / Length;
+        public double SIMDMean() => SIMDSum() / Length;
 
         public double Variance()
         {
@@ -258,6 +293,9 @@
         }
 
         public string Print() => data.Print(Rows, Columns);
+
+        public static implicit operator double[](Matrix matrix) => matrix.data;
+        public static explicit operator Matrix(double[] data) => new(data);
 
         public static Matrix operator +(Matrix left, Matrix right)
         {
@@ -398,9 +436,8 @@
 
         public void FreeMemory()
         {
-            //Debug.WriteLine($"Total Memory Before {GC.GetTotalMemory(true)}");
             ArrayPool<double>.Shared.Return(data);
-            //Debug.WriteLine($"Total Memory After {GC.GetTotalMemory(true)}");
+            GC.Collect(GC.GetGeneration(this), GCCollectionMode.Optimized, false, true);
         }
 
         public static Matrix Ones(Matrix matrix)
