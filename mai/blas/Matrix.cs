@@ -1,30 +1,24 @@
 ﻿namespace mai.blas
 {
     using FluentAssertions;
-    using System.Buffers;
-    using System.Numerics;
+    using System.Diagnostics;
     using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
 
     public class Matrix
+        : IDisposable
     {
-        protected double[] data;
+        protected IntPtr data;
+        protected readonly int sizeofFLoat = sizeof(float);
 
-        public Matrix(int rows, int columns)
+        public unsafe Matrix(int rows, int columns)
         {
             Rows = rows;
             Columns = columns;
 
-            data = ArrayPool<double>.Shared.Rent(Rows * Columns);
-            Array.Fill(data, 0);
-        }
-
-        public Matrix(double[] data)
-        {
-            Rows = 1;
-            Columns = data.Length;
-
-            this.data = data;
+            data = Marshal.AllocHGlobal(sizeof(float) * Length);
+            Unsafe.InitBlock(data.ToPointer(), 0, (uint)(sizeof(float) * Length));
+            //Debug.WriteLine($"{GetHashCode()} Created");
         }
 
         public int Rows { get; protected set; }
@@ -33,32 +27,43 @@
 
         public void Reshape(int rows, int columns)
         {
-            data.Length.Should().Be(rows * columns);
+            Length.Should().Be(rows * columns);
 
             Rows = rows;
             Columns = columns;
         }
 
-        public double this[int r, int c]
+        public float this[int r, int c]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => data[r * Columns + c];
+            get => this[r * Columns + c];
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set => data[r * Columns + c] = value;
+            set => this[r * Columns + c] = value;
+        }
+
+        public unsafe float this[int i]
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            get => ((float*)this)[i];
+
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            set => ((float*)this)[i] = value;
         }
 
         public Matrix GetRows(int start, int length)
         {
+            (start + length).Should().BeLessThanOrEqualTo(Rows);
+
             Matrix rows = new(length, Columns);
 
-            Parallel.For(start, length, r =>
+            for (int r = start; r < start + length; r++)
             {
-                Parallel.For(0, Columns, c =>
+                for (int c = 0; c < Columns; c++)
                 {
-                    rows[r, c] = this[r, c];
-                });
-            });
+                    rows[r - start, c] = this[r, c];
+                }
+            }
 
             return rows;
         }
@@ -67,13 +72,13 @@
         {
             Matrix transpose = new(Columns, Rows);
 
-            Parallel.For(0, Rows, r =>
+            for (int c = 0; c < Columns; c++)
             {
-                Parallel.For(0, Columns, c =>
+                for (int r = 0; r < Rows; r++)
                 {
                     transpose[c, r] = this[r, c];
-                });
-            });
+                }
+            }
 
             return transpose;
         }
@@ -82,7 +87,11 @@
 
         public Matrix Hadamard(Matrix matrix)
         {
+            matrix.Rows.Should().Be(Rows);
+            matrix.Columns.Should().Be(Columns);
+
             Matrix hadamard = new(Rows, Columns);
+
             for (int c = 0; c < Columns; c++)
             {
                 for (int r = 0; r < Rows; r++)
@@ -97,9 +106,9 @@
         public Matrix PermuteRows(int[] permutation)
         {
             Matrix perm = new(Rows, Columns);
-            for (int c = 0; c < Columns; c++)
+            for (int r = 0; r < Rows; r++)
             {
-                for (int r = 0; r < Rows; r++)
+                for (int c = 0; c < Columns; c++)
                 {
                     perm[permutation[r], c] = this[r, c];
                 }
@@ -111,13 +120,13 @@
         public Matrix PermuteColumns(int[] permutation)
         {
             Matrix perm = new(Rows, Columns);
-            Parallel.For(0, Rows, r =>
+            for (int c = 0; c < Columns; c++)
             {
-                Parallel.For(0, Columns, c =>
+                for (int r = 0; r < Rows; r++)
                 {
                     perm[r, permutation[c]] = this[r, c];
-                });
-            });
+                }
+            }
 
             return perm;
         }
@@ -128,17 +137,17 @@
 
             int columns = Columns + other.Columns;
             Matrix data = new(Rows, columns);
-            Parallel.For(0, Rows, r =>
+            for (int r = 0; r < Rows; r++)
             {
-                Parallel.For(0, Columns, c =>
+                for (int c = 0; c < Columns; c++)
                 {
                     data[r, c] = this[r, c];
-                });
-                Parallel.For(0, other.Columns, c =>
+                }
+                for (int c = 0; c < Columns; c++)
                 {
                     data[r, Columns + c] = other[r, c];
-                });
-            });
+                }
+            }
 
             return data;
         }
@@ -146,12 +155,15 @@
         public Matrix InitRandom(int? seed = null!)
         {
             Random random = seed == null ? new() : new(seed.Value);
-            Run(d => d = 2 * random.NextDouble() - 1);
+            for (int l = 0; l < Length; l++)
+            {
+                this[l] = (float)(2 * random.NextDouble() - 1);
+            }
 
             return this;
         }
 
-        public Matrix Sigmoid() => Run(this, d => 1d / (1d + Math.Exp(-d)));
+        public Matrix Sigmoid() => Run(this, d => 1f / (1f + (float)Math.Exp(-d)));
 
         public Matrix SumRows()
         {
@@ -181,47 +193,25 @@
             return data;
         }
 
-        public double Sum() => SumRows().SumColumns()[0, 0];
+        public float Sum() => SumRows().SumColumns()[0, 0];
 
-        public double SIMDSum()
+        public float Mean() => Sum() / Length;
+
+        public float Variance()
         {
-            double sum = 0;
-            var vectors = MemoryMarshal.Cast<double, Vector<double>>(data);
-            var vectorSum = Vector<double>.Zero;
-
-            foreach (var vector in vectors) { vectorSum += vector; }
-
-            for (var index = 0; index < Vector<double>.Count; index++) { sum += vectorSum[index]; }
-
-
-            var count = data.Length % Vector<double>.Count;
-            var source = data.AsSpan().Slice(data.Length - count, count);
-
-            foreach (var item in source) { sum += item; }
-
-            return sum;
-        }
-
-        public double Mean() => Sum() / Length;
-        public double SIMDMean() => SIMDSum() / Length;
-
-        public double Variance()
-        {
-            double mean = Mean();
-            double variance = (mean - this).Square().Sum() / Length;
+            float mean = Mean();
+            float variance = (mean - this).Square().Sum() / Length;
 
             return variance;
         }
 
-        public double StandardDeviation() => Math.Sqrt(Variance());
-
         public Matrix StandardScale()
         {
-            double mean = Mean();
+            float mean = Mean();
             Matrix mean0 = this - mean;
 
-            double variance = mean0.Square().Sum() / Length;
-            double std = Math.Sqrt(variance);
+            float variance = mean0.Square().Sum() / Length;
+            float std = (float)Math.Sqrt(variance);
 
             return mean0 / std;
         }
@@ -241,61 +231,58 @@
         private Matrix Broadcast(int rows)
         {
             Matrix data = new(rows, Columns);
-            Parallel.For(0, rows, r =>
+            for (int r = 0; r < Rows; r++)
             {
-                Parallel.For(0, Columns, c =>
+                for (int c = 0; c < Columns; c++)
                 {
                     data[r, c] = this[0, c];
-                });
-            });
+                }
+            }
 
             return data;
         }
 
-        public Matrix Tanh() => Run(this, d => (Math.Exp(d) - Math.Exp(-d)) / (Math.Exp(d) + Math.Exp(-d)));
+        public Matrix Tanh() => Run(this, d => (float)((Math.Exp(d) - Math.Exp(-d)) / (Math.Exp(d) + Math.Exp(-d))));
 
-        public Matrix Log() => Run(this, d => Math.Log(d));
+        public Matrix Log() => Run(this, d => (float)Math.Log(d));
 
         public Matrix LogSumExp()
         {
-            double sum;
+            float sum;
             Matrix data = new(Rows, 1);
             for (int r = 0; r < Rows; r++)
             {
                 sum = 0;
                 for (int c = 0; c < Columns; c++)
                 {
-                    sum += Math.Exp(this[r, c]);
+                    sum += (float)Math.Exp(this[r, c]);
                 }
-                data[r, 0] = Math.Log(sum);
+                data[r, 0] = (float)Math.Log(sum);
             }
 
             return data;
         }
 
-        public Matrix Softmax(double? min = null, double? max = null)
+        public Matrix Softmax(float? min = null, float? max = null)
         {
-            min ??= double.MinValue;
-            max ??= double.MaxValue;
+            min ??= float.MinValue;
+            max ??= float.MaxValue;
 
             Matrix logsumexp = LogSumExp();
 
             Matrix data = new(Rows, Columns);
-            Parallel.For(0, Rows, r =>
+            for (int r = 0; r < Rows; r++)
             {
-                Parallel.For(0, Columns, c =>
+                for (int c = 0; c < Columns; c++)
                 {
-                    data[r, c] = Math.Min(max.Value, Math.Max(min.Value, Math.Exp(this[r, c] - logsumexp[r, 0])));
-                });
-            });
+                    data[r, c] = Math.Min(max.Value, Math.Max(min.Value, (float)Math.Exp(this[r, c] - logsumexp[r, 0])));
+                }
+            }
 
             return data;
         }
 
-        public string Print() => data.Print(Rows, Columns);
-
-        public static implicit operator double[](Matrix matrix) => matrix.data;
-        public static explicit operator Matrix(double[] data) => new(data);
+        public string Print() => this.Print(Rows, Columns);
 
         public static Matrix operator +(Matrix left, Matrix right)
         {
@@ -312,9 +299,9 @@
 
             Matrix add = new(left.Rows, left.Columns);
 
-            for (int r = 0; r < left.Rows; r++)
+            for (int l = 0; l < left.Length; l++)
             {
-                Parallel.For(0, left.Columns, c => add[r, c] = left[r, c] + right[r, c]);
+                add[l] = left[l] + right[l];
             }
 
             return add;
@@ -326,41 +313,32 @@
             left.Columns.Should().Be(right.Columns);
 
             Matrix less = new(left.Rows, left.Columns);
-            Parallel.For(0, left.Rows, r =>
+            for (int s = 0; s < less.Length; s++)
             {
-                Parallel.For(0, left.Columns, c =>
-                {
-                    less[r, c] = left[r, c] - right[r, c];
-                });
-            });
+                less[s] = left[s] - right[s];
+            }
 
             return less;
         }
 
-        public static Matrix operator -(double left, Matrix right)
+        public static Matrix operator -(float left, Matrix right)
         {
             Matrix less = new(right.Rows, right.Columns);
-            Parallel.For(0, right.Rows, r =>
+            for (int l = 0; l < right.Length; l++)
             {
-                Parallel.For(0, right.Columns, c =>
-                {
-                    less[r, c] = left - right[r, c];
-                });
-            });
+                less[l] = left - right[l];
+            }
 
             return less;
         }
 
-        public static Matrix operator -(Matrix left, double right)
+        public static Matrix operator -(Matrix left, float right)
         {
             Matrix less = new(left.Rows, left.Columns);
-            Parallel.For(0, left.Rows, r =>
+            for (int l = 0; l < left.Length; l++)
             {
-                Parallel.For(0, left.Columns, c =>
-                {
-                    less[r, c] = left[r, c] - right;
-                });
-            });
+                less[l] = left[l] - right;
+            }
 
             return less;
         }
@@ -371,81 +349,63 @@
 
             Matrix dot = new(left.Rows, right.Columns);
 
-            Parallel.For(0, dot.Rows, r =>
+            for (int r = 0; r < dot.Rows; r++)
             {
-                Parallel.For(0, dot.Columns, c =>
+                for (int c = 0; c < dot.Columns; c++)
                 {
                     for (int k = 0; k < left.Columns; k++)
                     {
                         dot[r, c] += left[r, k] * right[k, c];
                     }
-                });
-            });
+                }
+            }
 
             return dot;
         }
 
-        public static Matrix operator /(Matrix left, double right)
+        public static Matrix operator /(Matrix left, float right)
         {
             right = 1 / right;
             Matrix result = new(left.Rows, left.Columns);
-            Parallel.For(0, left.Rows, r =>
+            for (int r = 0; r < left.Rows; r++)
             {
-                Parallel.For(0, left.Columns, c =>
+                for (int c = 0; c < left.Columns; c++)
                 {
                     result[r, c] = left[r, c] * right;
-                });
-            });
+                }
+            }
 
             return result;
         }
 
-        public static Matrix operator *(Matrix left, double right) => left.Run(left, l => l * right);
+        public static Matrix operator *(Matrix left, float right) => left.Run(left, l => l * right);
 
-        public static Matrix operator *(double left, Matrix right) => right * left;
+        public static Matrix operator *(float left, Matrix right) => right * left;
 
-        public Matrix Run(Matrix matrix, Func<double, double> func)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static unsafe implicit operator float*(in Matrix matrix) =>
+            matrix.data != IntPtr.Zero ?
+            (float*)matrix.data.ToPointer() :
+            throw new InvalidOperationException();
+
+        public Matrix Run(Matrix matrix, Func<float, float> func)
         {
             Matrix run = new(matrix.Rows, matrix.Columns);
-            Parallel.For(0, Rows, r =>
+
+            for (int r = 0; r < Rows; r++)
             {
-                Parallel.For(0, Columns, c => run[r, c] = func(matrix[r, c]));
-            });
+                for (int c = 0; c < Columns; c++)
+                {
+                    run[r, c] = func(matrix[r, c]);
+                }
+            }
 
             return run;
         }
 
-        public void Run(Func<double, double> func)
+        public void Dispose()
         {
-            Parallel.For(0, Rows, r =>
-            {
-                Parallel.For(0, Columns, c => this[r, c] = func(this[r, c]));
-            });
-        }
-
-        public Matrix Run(Matrix left, Matrix right, Func<Matrix, Matrix, int, int, double> action)
-        {
-            Matrix run = new(Rows, Columns);
-            Parallel.For(0, Rows, r =>
-            {
-                Parallel.For(0, Columns, c => this[r, c] = run[r, c] = action(left, right, r, c));
-            });
-
-            return run;
-        }
-
-        public void FreeMemory()
-        {
-            ArrayPool<double>.Shared.Return(data);
-            GC.Collect(GC.GetGeneration(this), GCCollectionMode.Optimized, false, true);
-        }
-
-        public static Matrix Ones(Matrix matrix)
-        {
-            Matrix ones = new(matrix.Rows, matrix.Columns);
-            ones.Run(d => 1d);
-
-            return ones;
+            Marshal.FreeHGlobal(data);
         }
 
         public static void SameShape(Matrix left, Matrix right)

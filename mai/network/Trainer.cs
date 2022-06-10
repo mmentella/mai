@@ -11,7 +11,7 @@ namespace mai.network
     public class Trainer
     {
         private readonly Optimizer optimizer;
-        private double bestLoss = 1.0e-9;
+        private float bestLoss = 1.0e-9f;
 
         public Trainer(Optimizer optimizer)
         {
@@ -24,7 +24,7 @@ namespace mai.network
 
             for (int i = 0; i < input.Rows; i += size)
             {
-                yield return (input.GetRows(i, i + size), output.GetRows(i, i + size));
+                yield return (input.GetRows(i, size), output.GetRows(i, size));
             }
         }
 
@@ -45,7 +45,7 @@ namespace mai.network
                     layer.First = true;
                 }
 
-                bestLoss = 1.0e-9;
+                bestLoss = 1.0e-9f;
             }
 
             for (int e = 0; e < epochs; e++)
@@ -54,13 +54,13 @@ namespace mai.network
                 int[] permutation = Enumerable.Range(0, samples.Rows)
                                               .OrderBy(k => random.Next())
                                               .ToArray();
-                samples = samples.PermuteRows(permutation);
-                labels = labels.PermuteRows(permutation);
+                var shuffle = samples.PermuteRows(permutation);
+                var shuffleLabels = labels.PermuteRows(permutation);
 
                 double loss;
                 int batchCount = 0;
                 Stopwatch sw = new();
-                var batches = GenerateBatches(samples, labels, batchSize);
+                var batches = GenerateBatches(shuffle, shuffleLabels, batchSize);
                 foreach (var (sample, label) in batches)
                 {
                     sw.Reset();
@@ -84,6 +84,8 @@ namespace mai.network
 
                     Debug.WriteLine($"Validation loss after {e + 1} epochs is {loss}");
                 }
+
+                GC.Collect();
             }
 
             Debug.WriteLine($"Training ended.");

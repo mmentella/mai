@@ -38,7 +38,7 @@ namespace mai.network
     {
         public override Matrix InputGradient()
         {
-            return 2d * ((prediction - target) / prediction.Rows);
+            return 2f * ((prediction - target) / prediction.Rows);
         }
 
         public override double Output()

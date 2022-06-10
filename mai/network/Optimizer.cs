@@ -2,9 +2,9 @@
 {
     public abstract class Optimizer
     {
-        protected double learningRate;
+        protected float learningRate;
 
-        public Optimizer(NeuralNetwork network, double learningRate)
+        public Optimizer(NeuralNetwork network, float learningRate)
         {
             Network = network;
             this.learningRate = learningRate;
@@ -17,7 +17,7 @@
     public class SGD
         : Optimizer
     {
-        public SGD(NeuralNetwork network, double learningRate = 0.01)
+        public SGD(NeuralNetwork network, float learningRate = 0.01f)
             : base(network, learningRate)
         {
         }
@@ -27,7 +27,10 @@
             var pg = Network.Parameters.Zip(Network.ParamGradients, (parameter, gradient) => (parameter, gradient));
             foreach (var (parameter, gradient) in pg)
             {
-                parameter.Run(parameter, gradient, (p, g, r, c) => p[r, c] -= learningRate * g[r, c]);
+                for (int l = 0; l < parameter.Length; l++)
+                {
+                    parameter[l] -= learningRate * gradient[l];
+                }
             }
         }
     }

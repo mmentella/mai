@@ -17,8 +17,6 @@ namespace mai.network
         public override Matrix Backward(Matrix outputGradient)
         {
             AssertSameShape(output, outputGradient);
-            inputGradient?.FreeMemory();
-            paramGradient?.FreeMemory();
 
             inputGradient = InputGradient(outputGradient);
             paramGradient = ParamGradient(outputGradient);
@@ -48,12 +46,14 @@ namespace mai.network
 
         public override Matrix ParamGradient(Matrix outputGradient)
         {
-            return input.Transpose() * outputGradient;
+            Matrix transpose = input.Transpose();
+            return transpose * outputGradient;
         }
 
         public override Matrix InputGradient(Matrix outputGradient)
         {
-            return outputGradient * parameter.Transpose();
+            Matrix transpose = parameter.Transpose();
+            return outputGradient * transpose;
         }
     }
 
@@ -70,7 +70,7 @@ namespace mai.network
 
         public override Matrix InputGradient(Matrix outputGradient)
         {
-            return Matrix.Ones(input).Hadamard(outputGradient);
+            return outputGradient;
         }
 
         public override Matrix Output()
@@ -80,8 +80,12 @@ namespace mai.network
 
         public override Matrix ParamGradient(Matrix outputGradient)
         {
-            paramGradient = Matrix.Ones(parameter).Hadamard(outputGradient);
-            return paramGradient.SumRows();
+            paramGradient = outputGradient;
+
+            Matrix result = paramGradient.SumRows();
+            result.Reshape(1, parameter.Columns);
+
+            return result;
         }
     }
 
