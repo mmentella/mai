@@ -1,4 +1,5 @@
 ﻿using mai.blas;
+using System.Diagnostics;
 
 namespace mai.mnist
 {
@@ -11,18 +12,20 @@ namespace mai.mnist
         public static string trainingLabelsFilename = "mnist/train-labels.idx1-ubyte";
         public static string testLabelsFilename = "mnist/t10k-labels.idx1-ubyte";
 
-        public static Matrix ReadSamples(string filename)
+        public static Matrix ReadSamples(string filename, int maxSamples)
         {
             using FileStream sampleFileStream = new(filename, FileMode.Open);
             using BinaryReader reader = new(sampleFileStream);
 
             int magicNumber = reader.ReadBigInt32();
             int numberOfImages = reader.ReadBigInt32();
+            numberOfImages= Math.Min(numberOfImages, maxSamples);
+
             int rows = reader.ReadBigInt32();
             int columns = reader.ReadBigInt32();
 
-            double[] image;
-            Matrix data = new Matrix(numberOfImages, rows * columns);
+            float[] image;
+            Matrix data = new(numberOfImages, rows * columns);
             for (int i = 0; i < numberOfImages; i++)
             {
                 image = reader.ReadImage(rows, columns);
@@ -30,21 +33,23 @@ namespace mai.mnist
                 {
                     data[i, l] = image[l];
                 }
+                //Debug.WriteLine($"Image loaded {i + 1}");
             }
 
             return data;
         }
 
-        public static Matrix ReadLabels(string filename)
+        public static Matrix ReadLabels(string filename, int maxSamples)
         {
             using FileStream sampleFileStream = new(filename, FileMode.Open);
             using BinaryReader reader = new(sampleFileStream);
 
             int labelMagic = reader.ReadBigInt32();
             int numberOfLabels = reader.ReadBigInt32();
+            numberOfLabels=Math.Min(numberOfLabels, maxSamples);
 
-            double[] label;
-            Matrix data = new Matrix(numberOfLabels, 10);
+            float[] label;
+            Matrix data = new(numberOfLabels, 10);
             for (int i = 0; i < numberOfLabels; i++)
             {
                 label = reader.ReadLabel();
@@ -57,12 +62,12 @@ namespace mai.mnist
             return data;
         }
 
-        public static (Matrix samples, Matrix labels, Matrix testSamples, Matrix testLabels) BuildMNIST()
+        public static (Matrix samples, Matrix labels, Matrix testSamples, Matrix testLabels) BuildMNIST(int maxSamples)
         {
-            Matrix samples = ReadSamples(trainingImagesFilename);
-            Matrix labels = ReadLabels(trainingLabelsFilename);
-            Matrix testSamples = ReadSamples(testImagesFilename);
-            Matrix testLabels = ReadLabels(testLabelsFilename);
+            Matrix samples = ReadSamples(trainingImagesFilename, maxSamples);
+            Matrix labels = ReadLabels(trainingLabelsFilename, maxSamples);
+            Matrix testSamples = ReadSamples(testImagesFilename, maxSamples);
+            Matrix testLabels = ReadLabels(testLabelsFilename, maxSamples);
 
             return (samples, labels, testSamples, testLabels);
         }
@@ -74,19 +79,19 @@ namespace mai.mnist
             return BitConverter.ToInt32(bytes, 0);
         }
 
-        public static double[] ReadImage(this BinaryReader br, int rows, int columns)
+        public static float[] ReadImage(this BinaryReader br, int rows, int columns)
         {
             var bytes = br.ReadBytes(rows * columns);
-            double[] data = bytes.Select(b => (double)b).ToArray();
+            float[] data = bytes.Select(b => (float)b).ToArray();
 
             return data;
         }
 
-        public static double[] ReadLabel(this BinaryReader br)
+        public static float[] ReadLabel(this BinaryReader br)
         {
             var label = (int)br.ReadByte();
 
-            double[] data = new double[10];
+            float[] data = new float[10];
             data[label] = 1;
 
             return data;

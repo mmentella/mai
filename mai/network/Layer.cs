@@ -38,7 +38,6 @@ namespace mai.network
                 SetupLayer(input);
                 First = false;
             }
-            this.input?.FreeMemory();
             this.input = input;
 
             foreach (var operation in operations)
@@ -46,7 +45,6 @@ namespace mai.network
                 input = operation.Forward(input);
             }
 
-            output?.FreeMemory();
             output = input;
             return output;
         }

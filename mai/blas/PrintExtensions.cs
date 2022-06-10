@@ -1,10 +1,10 @@
 ﻿using System.Text;
 
-namespace mai
+namespace mai.blas
 {
     public static class PrintExtensions
     {
-        public static string Print(this double[] values, int rows, int columns)
+        public static string Print(this Matrix values, int rows, int columns)
         {
             int Offset(int[] index) { return index[0] * columns + index[1]; }
             bool IncrementIndex(int[] index, int? skipAxis = null)
@@ -29,14 +29,12 @@ namespace mai
 
             StringBuilder stringBuilder = new();
 
-            double max = values.Max();
-            int numbers = ((int)max).ToString().Length;
+            //double max = values.Max();
+            int numbers = 6;//((int)max).ToString().Length;
             string format = stringBuilder.Append('0', numbers)
                                          .Append(".############")
                                          .ToString();
-            int maxLen = max.ToString(format)
-                            //.TrimStart('0')
-                            .Length;
+            int maxLen = 10;
             stringBuilder.Clear();
             string placeholder = stringBuilder.Append(' ', maxLen)
                                               .ToString();
@@ -95,25 +93,6 @@ namespace mai
                                  $"Length {rows * columns})");
 
             return stringBuilder.ToString();
-        }
-
-        public static string Print(this double[,] data)
-        {
-            int rows = data.GetLength(0);
-            int columns = data.GetLength(1);
-
-            if (rows == 1 && columns == 1) { return $"[{data[0, 0]}] Rank 1, Length 1"; }
-
-            double[] linear = new double[rows * columns];
-            for (int r = 0; r < rows; r++)
-            {
-                for (int c = 0; c < columns; c++)
-                {
-                    linear[r * columns + c] = data[r, c];
-                }
-            }
-
-            return linear.Print(rows, columns);
         }
     }
 }
