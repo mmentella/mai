@@ -5,11 +5,11 @@ namespace mai.network
     public class SoftmaxCrossEntropyLoss
         : Loss
     {
-        private readonly float epsilon;
+        private readonly double epsilon;
         private bool singleOutput;
         private Matrix softmaxPrediction;
 
-        public SoftmaxCrossEntropyLoss(float epsilon = 0.000000001f)
+        public SoftmaxCrossEntropyLoss(double epsilon = 0.000000001f)
         {
             this.epsilon = epsilon;
             singleOutput = false;

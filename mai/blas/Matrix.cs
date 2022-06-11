@@ -2,22 +2,23 @@
 {
     using FluentAssertions;
     using System.Diagnostics;
+    using System.Numerics;
     using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
 
     public class Matrix
         : IDisposable
     {
-        protected IntPtr data;
-        protected readonly int sizeofFLoat = sizeof(float);
+        protected double[] data;
 
         public unsafe Matrix(int rows, int columns)
         {
             Rows = rows;
             Columns = columns;
 
-            data = Marshal.AllocHGlobal(sizeof(float) * Length);
-            Unsafe.InitBlock(data.ToPointer(), 0, (uint)(sizeof(float) * Length));
+            data = new double[rows * columns];
+            //data = Marshal.AllocHGlobal(sizeof(double) * Length);
+            //Unsafe.InitBlock(data.ToPointer(), 0, (uint)(sizeof(double) * Length));
             //Debug.WriteLine($"{GetHashCode()} Created");
         }
 
@@ -25,15 +26,17 @@
         public int Columns { get; protected set; }
         public int Length => Rows * Columns;
 
-        public void Reshape(int rows, int columns)
+        public Matrix Reshape(int rows, int columns)
         {
             Length.Should().Be(rows * columns);
 
             Rows = rows;
             Columns = columns;
+
+            return this;
         }
 
-        public float this[int r, int c]
+        public double this[int r, int c]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => this[r * Columns + c];
@@ -42,13 +45,13 @@
             set => this[r * Columns + c] = value;
         }
 
-        public unsafe float this[int i]
+        public unsafe double this[int i]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get => ((float*)this)[i];
+            get => data[i];
 
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            set => ((float*)this)[i] = value;
+            set => data[i] = value;
         }
 
         public Matrix GetRows(int start, int length)
@@ -72,13 +75,17 @@
         {
             Matrix transpose = new(Columns, Rows);
 
-            for (int c = 0; c < Columns; c++)
+            void Kernel(int l)
             {
-                for (int r = 0; r < Rows; r++)
+                if (l == Length - 1) 
                 {
-                    transpose[c, r] = this[r, c];
+                    if(l == 0 || l == Length - 1) { transpose[l] = this[l]; }
+                    return;
                 }
+                transpose[(l * Rows) % (Length - 1)] = this[l];
             }
+            ParallelLoopResult plr = Parallel.For(0, Length, Kernel);
+            plr.IsCompleted.Should().BeTrue();
 
             return transpose;
         }
@@ -157,13 +164,13 @@
             Random random = seed == null ? new() : new(seed.Value);
             for (int l = 0; l < Length; l++)
             {
-                this[l] = (float)(2 * random.NextDouble() - 1);
+                this[l] = (double)(2 * random.NextDouble() - 1);
             }
 
             return this;
         }
 
-        public Matrix Sigmoid() => Run(this, d => 1f / (1f + (float)Math.Exp(-d)));
+        public Matrix Sigmoid() => Run(this, d => 1f / (1f + (double)Math.Exp(-d)));
 
         public Matrix SumRows()
         {
@@ -193,25 +200,25 @@
             return data;
         }
 
-        public float Sum() => SumRows().SumColumns()[0, 0];
+        public double Sum() => SumRows().SumColumns()[0, 0];
 
-        public float Mean() => Sum() / Length;
+        public double Mean() => Sum() / Length;
 
-        public float Variance()
+        public double Variance()
         {
-            float mean = Mean();
-            float variance = (mean - this).Square().Sum() / Length;
+            double mean = Mean();
+            double variance = (mean - this).Square().Sum() / Length;
 
             return variance;
         }
 
         public Matrix StandardScale()
         {
-            float mean = Mean();
+            double mean = Mean();
             Matrix mean0 = this - mean;
 
-            float variance = mean0.Square().Sum() / Length;
-            float std = (float)Math.Sqrt(variance);
+            double variance = mean0.Square().Sum() / Length;
+            double std = (double)Math.Sqrt(variance);
 
             return mean0 / std;
         }
@@ -231,7 +238,7 @@
         private Matrix Broadcast(int rows)
         {
             Matrix data = new(rows, Columns);
-            for (int r = 0; r < Rows; r++)
+            for (int r = 0; r < rows; r++)
             {
                 for (int c = 0; c < Columns; c++)
                 {
@@ -242,31 +249,31 @@
             return data;
         }
 
-        public Matrix Tanh() => Run(this, d => (float)((Math.Exp(d) - Math.Exp(-d)) / (Math.Exp(d) + Math.Exp(-d))));
+        public Matrix Tanh() => Run(this, d => (double)((Math.Exp(d) - Math.Exp(-d)) / (Math.Exp(d) + Math.Exp(-d))));
 
-        public Matrix Log() => Run(this, d => (float)Math.Log(d));
+        public Matrix Log() => Run(this, d => (double)Math.Log(d));
 
         public Matrix LogSumExp()
         {
-            float sum;
+            double sum;
             Matrix data = new(Rows, 1);
             for (int r = 0; r < Rows; r++)
             {
                 sum = 0;
                 for (int c = 0; c < Columns; c++)
                 {
-                    sum += (float)Math.Exp(this[r, c]);
+                    sum += (double)Math.Exp(this[r, c]);
                 }
-                data[r, 0] = (float)Math.Log(sum);
+                data[r, 0] = (double)Math.Log(sum);
             }
 
             return data;
         }
 
-        public Matrix Softmax(float? min = null, float? max = null)
+        public Matrix Softmax(double? min = null, double? max = null)
         {
-            min ??= float.MinValue;
-            max ??= float.MaxValue;
+            min ??= double.MinValue;
+            max ??= double.MaxValue;
 
             Matrix logsumexp = LogSumExp();
 
@@ -275,7 +282,7 @@
             {
                 for (int c = 0; c < Columns; c++)
                 {
-                    data[r, c] = Math.Min(max.Value, Math.Max(min.Value, (float)Math.Exp(this[r, c] - logsumexp[r, 0])));
+                    data[r, c] = Math.Min(max.Value, Math.Max(min.Value, (double)Math.Exp(this[r, c] - logsumexp[r, 0])));
                 }
             }
 
@@ -290,18 +297,26 @@
 
             if (left.Rows < right.Rows) { return right + left; }
 
+            Matrix right_ = right;
             if (left.Rows > 1 && right.Rows == 1)
             {
-                right = right.Broadcast(left.Rows);
+                right_ = right.Broadcast(left.Rows);
             }
 
-            left.Rows.Should().Be(right.Rows);
+            left.Rows.Should().Be(right_.Rows);
+
+            Span<Vector<double>> lspan = MemoryMarshal.Cast<double, Vector<double>>(left);
+            Span<Vector<double>> rspan = MemoryMarshal.Cast<double, Vector<double>>(right_);
 
             Matrix add = new(left.Rows, left.Columns);
-
-            for (int l = 0; l < left.Length; l++)
+            for (int s = 0; s < lspan.Length; s++)
             {
-                add[l] = left[l] + right[l];
+                Vector.Add(lspan[s], rspan[s]).CopyTo(add, s * Vector<double>.Count);
+            }
+
+            for (int s = lspan.Length * Vector<double>.Count; s < add.Length; s++)
+            {
+                add[s] = left[s] + right_[s];
             }
 
             return add;
@@ -312,8 +327,16 @@
             left.Rows.Should().Be(right.Rows);
             left.Columns.Should().Be(right.Columns);
 
+            Span<Vector<double>> lspan = MemoryMarshal.Cast<double, Vector<double>>(left);
+            Span<Vector<double>> rspan = MemoryMarshal.Cast<double, Vector<double>>(right);
+
             Matrix less = new(left.Rows, left.Columns);
-            for (int s = 0; s < less.Length; s++)
+            for (int s = 0; s < lspan.Length; s++)
+            {
+                Vector.Subtract(lspan[s], rspan[s]).CopyTo(less, s * Vector<double>.Count);
+            }
+
+            for (int s = lspan.Length * Vector<double>.Count; s < less.Length; s++)
             {
                 less[s] = left[s] - right[s];
             }
@@ -321,23 +344,43 @@
             return less;
         }
 
-        public static Matrix operator -(float left, Matrix right)
+        public static Matrix operator -(double left, Matrix right)
         {
+            double[] vleft = Enumerable.Repeat(left, Vector<double>.Count).ToArray();
+
+            Span<Vector<double>> lspan = MemoryMarshal.Cast<double, Vector<double>>(vleft);
+            Span<Vector<double>> rspan = MemoryMarshal.Cast<double, Vector<double>>(right);
+
             Matrix less = new(right.Rows, right.Columns);
-            for (int l = 0; l < right.Length; l++)
+            for (int s = 0; s < rspan.Length; s++)
             {
-                less[l] = left - right[l];
+                Vector.Subtract(lspan[0], rspan[s]).CopyTo(less, s * Vector<double>.Count);
+            }
+
+            for (int s = rspan.Length * Vector<double>.Count; s < right.Length; s++)
+            {
+                less[s] = left - right[s];
             }
 
             return less;
         }
 
-        public static Matrix operator -(Matrix left, float right)
+        public static Matrix operator -(Matrix left, double right)
         {
+            double[] vright = Enumerable.Repeat(right, Vector<double>.Count).ToArray();
+
+            Span<Vector<double>> lspan = MemoryMarshal.Cast<double, Vector<double>>(left);
+            Span<Vector<double>> rspan = MemoryMarshal.Cast<double, Vector<double>>(vright);
+
             Matrix less = new(left.Rows, left.Columns);
-            for (int l = 0; l < left.Length; l++)
+            for (int s = 0; s < lspan.Length; s++)
             {
-                less[l] = left[l] - right;
+                Vector.Subtract(lspan[s], rspan[0]).CopyTo(less, s * Vector<double>.Count);
+            }
+
+            for (int s = lspan.Length * Vector<double>.Count; s < left.Length; s++)
+            {
+                less[s] = left[s] - right;
             }
 
             return less;
@@ -349,13 +392,24 @@
 
             Matrix dot = new(left.Rows, right.Columns);
 
+            right = right.Transpose();
+
+            Span<double> lspan = left;
+            Span<double> rspan = right;
             for (int r = 0; r < dot.Rows; r++)
             {
+                Span<Vector<double>> lsv = MemoryMarshal.Cast<double, Vector<double>>(lspan.Slice(r * left.Columns, left.Columns));
                 for (int c = 0; c < dot.Columns; c++)
                 {
-                    for (int k = 0; k < left.Columns; k++)
+                    Span<Vector<double>> rsv = MemoryMarshal.Cast<double, Vector<double>>(rspan.Slice(c * right.Columns, right.Columns));
+                    for (int s = 0; s < lsv.Length; s++)
                     {
-                        dot[r, c] += left[r, k] * right[k, c];
+                        dot[r, c] = Vector.Dot(lsv[s], rsv[s]);
+                    }
+
+                    for (int s = lsv.Length * Vector<double>.Count; s < left.Columns; s++)
+                    {
+                        dot[r, c] += left[r, s] * right[c, s];
                     }
                 }
             }
@@ -363,49 +417,63 @@
             return dot;
         }
 
-        public static Matrix operator /(Matrix left, float right)
+        public static Matrix operator /(Matrix left, double right)
         {
             right = 1 / right;
-            Matrix result = new(left.Rows, left.Columns);
-            for (int r = 0; r < left.Rows; r++)
-            {
-                for (int c = 0; c < left.Columns; c++)
-                {
-                    result[r, c] = left[r, c] * right;
-                }
-            }
 
-            return result;
+            return left * right;
         }
 
-        public static Matrix operator *(Matrix left, float right) => left.Run(left, l => l * right);
+        public static Matrix operator *(Matrix left, double right)
+        {
+            double[] vright = Enumerable.Repeat(right, Vector<double>.Count).ToArray();
 
-        public static Matrix operator *(float left, Matrix right) => right * left;
+            Span<Vector<double>> lspan = MemoryMarshal.Cast<double, Vector<double>>(left);
+            Span<Vector<double>> rspan = MemoryMarshal.Cast<double, Vector<double>>(vright);
+
+            Matrix times = new(left.Rows, left.Columns);
+            for (int s = 0; s < lspan.Length; s++)
+            {
+                Vector.Multiply(lspan[s], rspan[0]).CopyTo(times, s * Vector<double>.Count);
+            }
+
+            for (int s = lspan.Length * Vector<double>.Count; s < left.Length; s++)
+            {
+                times[s] = left[s] * right;
+            }
+
+            return times;
+        }
+
+        public static Matrix operator *(double left, Matrix right) => right * left;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static unsafe implicit operator float*(in Matrix matrix) =>
-            matrix.data != IntPtr.Zero ?
-            (float*)matrix.data.ToPointer() :
-            throw new InvalidOperationException();
+        public static implicit operator double[](in Matrix matrix) => matrix.data;
 
-        public Matrix Run(Matrix matrix, Func<float, float> func)
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Span<double>(in Matrix matrix) => matrix.data;
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static implicit operator Matrix(in double[] data) => new(1, data.Length) { data = data };
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public Matrix Run(Matrix matrix, Func<double, double> func)
         {
             Matrix run = new(matrix.Rows, matrix.Columns);
 
-            for (int r = 0; r < Rows; r++)
+            void Kernel(int l)
             {
-                for (int c = 0; c < Columns; c++)
-                {
-                    run[r, c] = func(matrix[r, c]);
-                }
+                run[l] = func(matrix[l]);
             }
+            ParallelLoopResult plr = Parallel.For(0, Length, Kernel);
+            plr.IsCompleted.Should().BeTrue();
 
             return run;
         }
 
         public void Dispose()
         {
-            Marshal.FreeHGlobal(data);
+
         }
 
         public static void SameShape(Matrix left, Matrix right)

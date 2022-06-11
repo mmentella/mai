@@ -20,13 +20,16 @@ namespace maiTests.network
             NeuralNetwork network = new(new Layer[] {new Dense(89, activation:new Tanh()),
                                                      new Dense(10, activation:new Linear())
                                                     }, new SoftmaxCrossEntropyLoss(), seed: 20220603);
-            Optimizer sgd = new SGD(network, learningRate: 0.1f);
+            Optimizer sgd = new SGD(network, learningRate: 0.1d);
             Trainer trainer = new(optimizer: sgd);
 
-            var (samples, labels, testSamples, testLabels) = DataProvider.BuildMNIST(60000);
+            var (samples, labels, testSamples, testLabels) = DataProvider.BuildMNIST(6000, 1000);
             samples = samples.StandardScale();
+            testSamples = testSamples.StandardScale();
 
-            trainer.Fit(samples, labels, testSamples, testLabels, batchSize: 10);
+            GC.Collect();
+
+            trainer.Fit(samples, labels, testSamples, testLabels, batchSize: 20, checkStep: 1);
         }
     }
 }
