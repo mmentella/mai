@@ -11,7 +11,7 @@ namespace mai.network
     public class Trainer
     {
         private readonly Optimizer optimizer;
-        private float bestLoss = 1.0e-9f;
+        private double bestLoss = 1.0e-9f;
 
         public Trainer(Optimizer optimizer)
         {
@@ -54,13 +54,15 @@ namespace mai.network
                 int[] permutation = Enumerable.Range(0, samples.Rows)
                                               .OrderBy(k => random.Next())
                                               .ToArray();
-                var shuffle = samples.PermuteRows(permutation);
-                var shuffleLabels = labels.PermuteRows(permutation);
+                samples = samples.PermuteRows(permutation);
+                labels = labels.PermuteRows(permutation);
+
+                GC.Collect();
 
                 double loss;
                 int batchCount = 0;
                 Stopwatch sw = new();
-                var batches = GenerateBatches(shuffle, shuffleLabels, batchSize);
+                var batches = GenerateBatches(samples, labels, batchSize);
                 foreach (var (sample, label) in batches)
                 {
                     sw.Reset();
@@ -72,9 +74,7 @@ namespace mai.network
                     sw.Stop();
 
                     batchCount++;
-                    Debug.WriteLine($"Batch: {batchCount} - running loss: {loss}. Total Seconds: {sw.Elapsed.TotalSeconds}, Total Memory: {GC.GetTotalMemory(true)}");
-
-                    GC.Collect();
+                    //Debug.WriteLine($"Batch: {batchCount} - running loss: {loss}. Total Seconds: {sw.Elapsed.TotalSeconds}, Total Memory: {GC.GetTotalMemory(true)}");
                 }
 
                 if ((e + 1) % checkStep == 0)

@@ -2,9 +2,9 @@
 {
     public abstract class Optimizer
     {
-        protected float learningRate;
+        protected double learningRate;
 
-        public Optimizer(NeuralNetwork network, float learningRate)
+        public Optimizer(NeuralNetwork network, double learningRate)
         {
             Network = network;
             this.learningRate = learningRate;
@@ -17,7 +17,7 @@
     public class SGD
         : Optimizer
     {
-        public SGD(NeuralNetwork network, float learningRate = 0.01f)
+        public SGD(NeuralNetwork network, double learningRate = 0.01f)
             : base(network, learningRate)
         {
         }
