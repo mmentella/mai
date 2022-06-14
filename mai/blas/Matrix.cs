@@ -1,13 +1,12 @@
 ﻿namespace mai.blas
 {
     using FluentAssertions;
-    using System.Diagnostics;
+    using System.Buffers;
     using System.Numerics;
     using System.Runtime.CompilerServices;
     using System.Runtime.InteropServices;
 
     public class Matrix
-        : IDisposable
     {
         protected double[] data;
 
@@ -16,10 +15,7 @@
             Rows = rows;
             Columns = columns;
 
-            data = new double[rows * columns];
-            //data = Marshal.AllocHGlobal(sizeof(double) * Length);
-            //Unsafe.InitBlock(data.ToPointer(), 0, (uint)(sizeof(double) * Length));
-            //Debug.WriteLine($"{GetHashCode()} Created");
+            data = new double[Length];
         }
 
         public int Rows { get; protected set; }
@@ -45,7 +41,7 @@
             set => this[r * Columns + c] = value;
         }
 
-        public unsafe double this[int i]
+        public double this[int i]
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             get => data[i];
@@ -60,13 +56,7 @@
 
             Matrix rows = new(length, Columns);
 
-            for (int r = start; r < start + length; r++)
-            {
-                for (int c = 0; c < Columns; c++)
-                {
-                    rows[r - start, c] = this[r, c];
-                }
-            }
+            Array.Copy(this, start * Columns, rows, 0, length * Columns);
 
             return rows;
         }
@@ -77,11 +67,7 @@
 
             void Kernel(int l)
             {
-                if (l == Length - 1) 
-                {
-                    if(l == 0 || l == Length - 1) { transpose[l] = this[l]; }
-                    return;
-                }
+                if (l == 0 || l == Length - 1) { transpose[l] = this[l]; return; }
                 transpose[(l * Rows) % (Length - 1)] = this[l];
             }
             ParallelLoopResult plr = Parallel.For(0, Length, Kernel);
@@ -262,9 +248,9 @@
                 sum = 0;
                 for (int c = 0; c < Columns; c++)
                 {
-                    sum += (double)Math.Exp(this[r, c]);
+                    sum += Math.Exp(this[r, c]);
                 }
-                data[r, 0] = (double)Math.Log(sum);
+                data[r, 0] = Math.Log(sum);
             }
 
             return data;
@@ -404,7 +390,7 @@
                     Span<Vector<double>> rsv = MemoryMarshal.Cast<double, Vector<double>>(rspan.Slice(c * right.Columns, right.Columns));
                     for (int s = 0; s < lsv.Length; s++)
                     {
-                        dot[r, c] = Vector.Dot(lsv[s], rsv[s]);
+                        dot[r, c] += Vector.Dot(lsv[s], rsv[s]);
                     }
 
                     for (int s = lsv.Length * Vector<double>.Count; s < left.Columns; s++)
@@ -469,11 +455,6 @@
             plr.IsCompleted.Should().BeTrue();
 
             return run;
-        }
-
-        public void Dispose()
-        {
-
         }
 
         public static void SameShape(Matrix left, Matrix right)

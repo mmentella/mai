@@ -57,7 +57,7 @@ namespace mai.network
                 samples = samples.PermuteRows(permutation);
                 labels = labels.PermuteRows(permutation);
 
-                GC.Collect();
+                //GC.Collect();
 
                 double loss;
                 int batchCount = 0;
@@ -74,9 +74,14 @@ namespace mai.network
                     sw.Stop();
 
                     batchCount++;
-                    //Debug.WriteLine($"Batch: {batchCount} - running loss: {loss}. Total Seconds: {sw.Elapsed.TotalSeconds}, Total Memory: {GC.GetTotalMemory(true)}");
                 }
+                if(e == 0)
+                {
+                    var predictions = optimizer.Network.Forward(samplesTest);
+                    loss = optimizer.Network.Loss.Forward(predictions, labelsTest);
 
+                    Debug.WriteLine($"Initial Validation loss is {loss}");
+                }
                 if ((e + 1) % checkStep == 0)
                 {
                     var predictions = optimizer.Network.Forward(samplesTest);
@@ -85,7 +90,7 @@ namespace mai.network
                     Debug.WriteLine($"Validation loss after {e + 1} epochs is {loss}");
                 }
 
-                GC.Collect();
+                //GC.Collect();
             }
 
             Debug.WriteLine($"Training ended.");
