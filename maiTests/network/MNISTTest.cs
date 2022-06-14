@@ -1,6 +1,5 @@
 ﻿using mai.mnist;
 using mai.network;
-using System;
 using Xunit;
 
 namespace maiTests.network
@@ -10,7 +9,7 @@ namespace maiTests.network
         [Fact]
         public void MNISTSoftmaxCrossEntropyLossTest()
         {
-            int trainingSamples = 6000;
+            int trainingSamples = 100;
             int validationSamples = trainingSamples / 6;
 
             NeuralNetwork network = new(new Layer[] {new Dense(89, activation:new Tanh()),

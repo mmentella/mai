@@ -1,5 +1,5 @@
-﻿using mai.blas;
-using FluentAssertions;
+﻿using FluentAssertions;
+using mai.blas;
 
 namespace mai.network
 {
