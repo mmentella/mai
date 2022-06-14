@@ -1,10 +1,5 @@
 ﻿using mai.blas;
-using System;
-using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace mai.network
 {
@@ -70,12 +65,12 @@ namespace mai.network
 
                     loss = optimizer.Network.Train(sample, label);
                     optimizer.Step();
-                    
+
                     sw.Stop();
 
                     batchCount++;
                 }
-                if(e == 0)
+                if (e == 0)
                 {
                     var predictions = optimizer.Network.Forward(samplesTest);
                     loss = optimizer.Network.Loss.Forward(predictions, labelsTest);

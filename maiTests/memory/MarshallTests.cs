@@ -1,12 +1,9 @@
 ﻿using mai.blas;
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace maiTests.memory
@@ -39,7 +36,7 @@ namespace maiTests.memory
                         dot[r, c] = Vector.Dot(lsv[s], rsv[s]);
                     }
 
-                    for (int s = lsv.Length*Vector<double>.Count; s < left.Columns; s++)
+                    for (int s = lsv.Length * Vector<double>.Count; s < left.Columns; s++)
                     {
                         dot[r, c] += left[r, s] * right[c, s];
                     }
