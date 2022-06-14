@@ -85,13 +85,25 @@
 
             Matrix hadamard = new(Rows, Columns);
 
-            for (int c = 0; c < Columns; c++)
+            Span<Vector<double>> lspan = MemoryMarshal.Cast<double, Vector<double>>(this);
+            Span<Vector<double>> rspan = MemoryMarshal.Cast<double, Vector<double>>(matrix);
+
+            for (int s = 0; s < lspan.Length; s++)
             {
-                for (int r = 0; r < Rows; r++)
-                {
-                    hadamard[r, c] = this[r, c] * matrix[r, c];
-                }
+                Vector.Multiply(lspan[s], rspan[s]).CopyTo(hadamard, s * Vector<double>.Count);
             }
+            for (int s = lspan.Length * Vector<double>.Count; s < hadamard.Length; s++)
+            {
+                hadamard[s] = this[s] * matrix[s];
+            }
+
+            //for (int c = 0; c < Columns; c++)
+            //{
+            //    for (int r = 0; r < Rows; r++)
+            //    {
+            //        hadamard[r, c] = this[r, c] * matrix[r, c];
+            //    }
+            //}
 
             return hadamard;
         }
