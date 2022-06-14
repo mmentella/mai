@@ -50,7 +50,14 @@ namespace mai.blas.Tests
         [Fact()]
         public void PermuteRowsTest()
         {
-            throw new NotImplementedException();
+            Matrix test = new double[] { 1, 2, 3, 4 };
+            test.Reshape(2, 2);
+
+            Random random = new(1);
+            int[] permutation = Enumerable.Range(0, test.Rows)
+                                          .OrderBy(k => random.Next())
+                                          .ToArray();
+            test = test.PermuteRows(permutation);
         }
 
         [Fact()]
@@ -185,6 +192,24 @@ namespace mai.blas.Tests
             Matrix times = left * right;
 
             times.Sum().Should().Be(42);
+        }
+
+        [Fact]
+        public void DotTest()
+        {
+            Matrix left = new(2, 3);
+            left[0] = 1;
+            left[1] = 2;
+            left[2] = 3;
+            left[3] = 4;
+            left[4] = 5;
+            left[5] = 6;
+
+            double[] items = Enumerable.Range(1, 27).Select(i => (double)i).ToArray();
+            Matrix right = items;
+            right.Reshape(3, 9);
+
+            Matrix dot = left * right;
         }
 
         [Fact]
