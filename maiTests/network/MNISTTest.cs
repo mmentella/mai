@@ -12,10 +12,10 @@ namespace maiTests.network
             int trainingSamples = 100;
             int validationSamples = trainingSamples / 6;
 
-            NeuralNetwork network = new(new Layer[] {new Dense(89, activation:new Tanh()),
+            NeuralNetwork network = new(new Layer[] {new Dense(89, activation:new Sigmoid()),
                                                      new Dense(10, activation:new Linear())
                                                     }, new SoftmaxCrossEntropyLoss(), seed: 20220603);
-            Optimizer sgd = new SGD(network, learningRate: 0.1d);
+            Optimizer sgd = new SGDMomentum(network, learningRate: 0.9d);
             Trainer trainer = new(optimizer: sgd);
 
             var (samples, labels, testSamples, testLabels) = DataProvider.BuildMNIST(trainingSamples, validationSamples);

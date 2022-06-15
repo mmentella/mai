@@ -97,16 +97,10 @@
                 hadamard[s] = this[s] * matrix[s];
             }
 
-            //for (int c = 0; c < Columns; c++)
-            //{
-            //    for (int r = 0; r < Rows; r++)
-            //    {
-            //        hadamard[r, c] = this[r, c] * matrix[r, c];
-            //    }
-            //}
-
             return hadamard;
         }
+
+        internal Matrix NonNegativeMask() => Run(this, d => d >= 0 ? 1 : 0);
 
         public Matrix PermuteRows(int[] permutation)
         {
@@ -121,6 +115,8 @@
 
             return perm;
         }
+
+        internal Matrix ReLU() => Run(this, d => d > 0 ? d : 0);
 
         public Matrix PermuteColumns(int[] permutation)
         {
@@ -157,12 +153,17 @@
             return data;
         }
 
-        public Matrix InitRandom(int? seed = null!)
+        public Matrix InitRandom(int? seed = null!, double mean = 0, double stdDev = 1)
         {
             Random random = seed == null ? new() : new(seed.Value);
+            
             for (int l = 0; l < Length; l++)
             {
-                this[l] = (double)(2 * random.NextDouble() - 1);
+                double u1 = 1 - random.NextDouble();
+                double u2 = 1 - random.NextDouble();
+                double normal = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Sin(2.0 * Math.PI * u2);
+                
+                this[l] = mean + stdDev * normal;
             }
 
             return this;
