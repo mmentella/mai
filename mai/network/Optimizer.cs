@@ -12,12 +12,14 @@
         public NeuralNetwork Network { get; }
 
         public abstract void Step();
+
+        public virtual void Update(int percentage) { }
     }
 
     public class SGD
         : Optimizer
     {
-        public SGD(NeuralNetwork network, double learningRate = 0.01f)
+        public SGD(NeuralNetwork network, double learningRate = 0.01)
             : base(network, learningRate)
         {
         }
@@ -33,5 +35,19 @@
                 }
             }
         }
+    }
+
+    public class SGDMomentum
+        : SGD
+    {
+        public SGDMomentum(NeuralNetwork network, double learningRate)
+            : base(network, learningRate) { }
+
+        public override void Step()
+        {
+            base.Step();
+        }
+
+        override public void Update(int percentage) { learningRate = learningRate * (1 - 0.01 * percentage); }
     }
 }

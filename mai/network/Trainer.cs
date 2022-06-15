@@ -85,7 +85,7 @@ namespace mai.network
                     Debug.WriteLine($"Validation loss after {e + 1} epochs is {loss}");
                 }
 
-                //GC.Collect();
+                optimizer.Update(e);
             }
 
             Debug.WriteLine($"Training ended.");

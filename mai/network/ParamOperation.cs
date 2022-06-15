@@ -106,6 +106,21 @@ namespace mai.network
         }
     }
 
+    public class ReLU
+        : Operation
+    {
+        public override Matrix InputGradient(Matrix outputGradient)
+        {
+            Matrix mask = output.NonNegativeMask();
+            return outputGradient.Hadamard(mask);
+        }
+
+        public override Matrix Output()
+        {
+            return input.ReLU();
+        }
+    }
+
     public class Tanh
         : Operation
     {

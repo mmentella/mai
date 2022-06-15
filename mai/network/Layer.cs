@@ -105,10 +105,10 @@ namespace mai.network
             parameters.Clear();
 
             Matrix weights = new(input.Columns, neurons);
-            weights.InitRandom(Seed);
+            weights.InitRandom(seed: Seed, stdDev: 2d / (weights.Rows + weights.Columns));
 
             Matrix bias = new(1, neurons);
-            bias.InitRandom(Seed);
+            bias.InitRandom(seed: Seed, stdDev: 2d / (weights.Rows + weights.Columns));
 
             parameters.Add(weights);
             parameters.Add(bias);
