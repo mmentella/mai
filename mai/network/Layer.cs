@@ -91,11 +91,13 @@ namespace mai.network
     public class Dense
         : Layer
     {
+        private readonly double dropout;
         private readonly Operation activation;
 
-        public Dense(int neurons, Operation activation = null!, int? seed = null!)
+        public Dense(int neurons, Operation activation = null!, int? seed = null!, double dropout = 1)
             : base(neurons)
         {
+            this.dropout = dropout;
             this.activation = activation ?? new Sigmoid();
             Seed = seed;
         }
@@ -116,6 +118,11 @@ namespace mai.network
             operations.Add(new WeightMultiply(weights));
             operations.Add(new BiasAdd(bias));
             operations.Add(activation);
+
+            if (dropout < 1)
+            {
+                operations.Add(new Dropout(dropout));
+            }
         }
     }
 }
