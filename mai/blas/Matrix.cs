@@ -156,13 +156,13 @@
         public Matrix InitRandom(int? seed = null!, double mean = 0, double stdDev = 1)
         {
             Random random = seed == null ? new() : new(seed.Value);
-            
+
             for (int l = 0; l < Length; l++)
             {
                 double u1 = 1 - random.NextDouble();
                 double u2 = 1 - random.NextDouble();
                 double normal = Math.Sqrt(-2.0 * Math.Log(u1)) * Math.Sin(2.0 * Math.PI * u2);
-                
+
                 this[l] = mean + stdDev * normal;
             }
 
