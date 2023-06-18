@@ -7,7 +7,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "mai", "mai\mai.csproj", "{3
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "maiTests", "maiTests\maiTests.csproj", "{919533F2-EB69-4770-85EA-E0B2252960C7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mai.differentition", "mai.differentition\mai.differentition.csproj", "{1D4E6FAD-75C1-44D1-BE55-ACE10E15B1D7}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mai.differentiation", "mai.differentition\mai.differentiation.csproj", "{1D4E6FAD-75C1-44D1-BE55-ACE10E15B1D7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
