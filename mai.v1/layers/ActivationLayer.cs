@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace mai.v1.layers;
+﻿namespace mai.v1.layers;
 
 public class ActivationLayer
     : ILayer
@@ -14,6 +8,7 @@ public class ActivationLayer
     public ActivationLayer(ActivationFunction activationFunction)
     {
         this.activationFunction = activationFunction;
+        Output = new double[0];
     }
 
     public ILayer? PreviousLayer { get; private set; }

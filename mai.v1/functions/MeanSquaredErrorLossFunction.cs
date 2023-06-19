@@ -8,7 +8,7 @@ public class MeanSquaredErrorLossFunction
         double[] output = new double[actualOutput.Length];
         Parallel.For(0, actualOutput.Length, i =>
         {
-            output[i] = 0.5 * Math.Pow(expectedOutput[i] - actualOutput[i], 2);
+            output[i] = actualOutput[i] - expectedOutput[i];
         });
         return output;
     }
@@ -18,7 +18,7 @@ public class MeanSquaredErrorLossFunction
         double[] output = new double[actualOutput.Length];
         Parallel.For(0, actualOutput.Length, i =>
         {
-            output[i] = actualOutput[i] - expectedOutput[i];
+            output[i] = 0.5 * Math.Pow(expectedOutput[i] - actualOutput[i], 2);
         });
         return output;
     }
