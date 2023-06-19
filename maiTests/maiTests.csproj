@@ -27,6 +27,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\mai.differentition\mai.differentiation.csproj" />
+    <ProjectReference Include="..\mai.v1\mai.v1.csproj" />
     <ProjectReference Include="..\mai\mai.csproj" />
   </ItemGroup>
 
