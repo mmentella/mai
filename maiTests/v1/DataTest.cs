@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using mai.v1.statistics;
+using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -30,7 +32,21 @@ public class DataTest
             });
         double min = prices.Min();
         double max = prices.Max();
+        double avg = prices.Average();
+        double std = prices.StandardDeviation();
 
         double[] distinct = prices.Distinct().ToArray();
+        double[][] hotencoded = HotEncode(distinct);
+    }
+
+    private double[][] HotEncode(double[] distinct)
+    {
+        double[][] hotencoded = new double[distinct.Length][];
+        for (int i = 0; i < distinct.Length; i++)
+        {
+            hotencoded[i] = new double[distinct.Length];
+            hotencoded[i][i] = 1;
+        }
+        return hotencoded;
     }
 }
