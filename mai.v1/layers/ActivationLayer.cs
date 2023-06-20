@@ -8,7 +8,7 @@ public class ActivationLayer
     public ActivationLayer(ActivationFunction activationFunction)
     {
         this.activationFunction = activationFunction;
-        Output = new double[0];
+        Output = Array.Empty<double>();
     }
 
     public ILayer? PreviousLayer { get; private set; }

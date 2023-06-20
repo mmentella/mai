@@ -1,6 +1,6 @@
 ﻿namespace mai.v1.layers;
 
-internal class DenseLayer
+public class DenseLayer
     : ILayer
 {
     public DenseLayer(int inputSize, int outputSize, ActivationFunction activationFunction)
@@ -39,6 +39,7 @@ internal class DenseLayer
     public void Forward(double[] input)
     {
         linearLayer.Forward(input);
+        Output = activationLayer.Output;
     }
 
     public void SetNextLayer(ILayer layer)

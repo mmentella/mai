@@ -40,4 +40,33 @@ public class DenseLayerTest
             }
         }
     }
+
+    [Fact]
+    public void DenseLayerTypeTest()
+    {
+        // Arrange
+        ILayer dense = new DenseLayer(1, 1, new ESwishActivationFunction(1.25));
+        LossFunction lossFunction = new MeanSquaredErrorLossFunction();
+
+        double[] input = new double[1];
+        double[] output = new double[1];
+
+        // Act
+        for (int epoch = 0; epoch < 1000; epoch++)
+        {
+            for (double i = 0; i <= 1; i += 0.1)
+            {
+                input[0] = i;
+                output[0] = Math.Exp(-0.5 * i * i) / (Math.Sqrt(2 * Math.PI));
+
+                dense.Forward(input);
+                double[] prediction = dense.Output;
+
+                double[] loss = lossFunction.Loss(prediction, output);
+                dense.Backward(input, lossFunction.GradientLoss(prediction, output), 0.001);
+
+                Debug.WriteLine($"epoch: {epoch:0}|output: {output[0]:0.0000}|prediction: {prediction[0]:0.0000}|loss: {loss[0]:0.0000}");
+            }
+        }
+    }
 }
