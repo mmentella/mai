@@ -31,4 +31,10 @@
     <ProjectReference Include="..\mai\mai.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="v1\EUR.USD-Minute-Trade.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
