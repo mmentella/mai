@@ -1,6 +1,7 @@
 ﻿using mai.v1;
-using mai.v1.functions;
+using mai.v1.activation;
 using mai.v1.layers;
+using mai.v1.loss;
 using System;
 using System.Diagnostics;
 using Xunit;

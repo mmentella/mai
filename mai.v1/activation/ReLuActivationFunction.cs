@@ -1,15 +1,8 @@
-﻿namespace mai.v1.functions;
+﻿namespace mai.v1.activation;
 
-public class LeakyReLuActivationFunction
+public class ReLuActivationFunction
     : ActivationFunction
 {
-    public double Slope { get; }
-
-    public LeakyReLuActivationFunction(double slope)
-    {
-        Slope = slope;
-    }
-
     public override double[] Forward(double[] input)
     {
         double[] output = new double[input.Length];
@@ -25,7 +18,7 @@ public class LeakyReLuActivationFunction
         double[] output = new double[input.Length];
         Parallel.For(0, input.Length, i =>
         {
-            output[i] = input[i] > 0 ? 1 : Slope;
+            output[i] = input[i] > 0 ? 1 : 0;
         });
         return output;
     }

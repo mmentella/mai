@@ -4,5 +4,5 @@ public abstract class ActivationFunction
 {
     public abstract double[] Forward(double[] input);
 
-    public abstract double[] Backward(double[] input);
+    public abstract double[] Backward(double[] gradient);
 }

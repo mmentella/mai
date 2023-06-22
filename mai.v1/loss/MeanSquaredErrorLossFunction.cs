@@ -1,4 +1,4 @@
-﻿namespace mai.v1.functions;
+﻿namespace mai.v1.loss;
 
 public class MeanSquaredErrorLossFunction
     : LossFunction
