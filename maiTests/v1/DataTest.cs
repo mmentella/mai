@@ -1,5 +1,4 @@
 ﻿using mai.v1.statistics;
-using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -18,7 +17,7 @@ public class DataTest
         string[] lines = await File.ReadAllLinesAsync("v1\\EUR.USD-Minute-Trade.txt");
         lines.Select(line => line.Split(','))
             .ToList()
-            .ForEach(line => 
+            .ForEach(line =>
             {
                 double open = double.Parse(line[2], CultureInfo.InvariantCulture);
                 double high = double.Parse(line[3], CultureInfo.InvariantCulture);
@@ -39,7 +38,7 @@ public class DataTest
         double[][] hotencoded = HotEncode(distinct);
     }
 
-    private double[][] HotEncode(double[] distinct)
+    private static double[][] HotEncode(double[] distinct)
     {
         double[][] hotencoded = new double[distinct.Length][];
         for (int i = 0; i < distinct.Length; i++)
