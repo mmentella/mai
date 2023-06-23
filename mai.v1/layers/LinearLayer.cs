@@ -20,6 +20,16 @@ public class LinearLayer
         Weights = new double[inputSize * outputSize];
         Biases = new double[outputSize];
         Output = Array.Empty<double>();
+
+        Random random = new();
+        for (int i = 0; i < OutputSize; i++)
+        {
+            Biases[i] = 0.001 * random.NextDouble();
+            for (int j = 0; j < InputSize; j++)
+            {
+                Weights[j * OutputSize + i] = 0.001 * random.NextDouble();
+            }
+        }
     }
 
     public void Forward(double[] input)

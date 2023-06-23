@@ -8,7 +8,7 @@ public class CrossEntropyLossFunction
         double[] output = new double[actualOutput.Length];
         Parallel.For(0, actualOutput.Length, i =>
         {
-            output[i] = -1 * (expectedOutput[i] / actualOutput[i]);
+            output[i] = actualOutput[i] - expectedOutput[i];
         });
         return output;
     }

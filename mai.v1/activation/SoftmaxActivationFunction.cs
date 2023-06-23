@@ -3,7 +3,6 @@
 public class SoftmaxActivationFunction
     : ActivationFunction
 {
-    private double[] input = Array.Empty<double>();
     private double[] output = Array.Empty<double>();
 
     public override double[] Forward(double[] input)
@@ -11,7 +10,6 @@ public class SoftmaxActivationFunction
         IEnumerable<double> exp = input.Select(Math.Exp);
         double sum = 1d / exp.Sum();
 
-        this.input = input;
         output = exp.Select(x => x * sum).ToArray();
 
         return output;
