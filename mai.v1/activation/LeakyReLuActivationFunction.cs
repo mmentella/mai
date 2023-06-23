@@ -1,14 +1,21 @@
-﻿namespace mai.v1.functions;
+﻿namespace mai.v1.activation;
 
-public class TanhActivationFunction
+public class LeakyReLuActivationFunction
     : ActivationFunction
 {
+    public double Slope { get; }
+
+    public LeakyReLuActivationFunction(double slope)
+    {
+        Slope = slope;
+    }
+
     public override double[] Forward(double[] input)
     {
         double[] output = new double[input.Length];
         Parallel.For(0, input.Length, i =>
         {
-            output[i] = Math.Tanh(input[i]);
+            output[i] = Math.Max(0, input[i]);
         });
         return output;
     }
@@ -18,8 +25,7 @@ public class TanhActivationFunction
         double[] output = new double[input.Length];
         Parallel.For(0, input.Length, i =>
         {
-            double value = Math.Tanh(input[i]);
-            output[i] = 1 - value * value;
+            output[i] = input[i] > 0 ? 1 : Slope;
         });
         return output;
     }

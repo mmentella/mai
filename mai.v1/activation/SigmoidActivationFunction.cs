@@ -1,6 +1,6 @@
-﻿namespace mai.v1.functions;
+﻿namespace mai.v1.activation;
 
-public class ReLuActivationFunction
+public class SigmoidActivationFunction
     : ActivationFunction
 {
     public override double[] Forward(double[] input)
@@ -8,7 +8,7 @@ public class ReLuActivationFunction
         double[] output = new double[input.Length];
         Parallel.For(0, input.Length, i =>
         {
-            output[i] = Math.Max(0, input[i]);
+            output[i] = 1.0 / (1.0 + Math.Exp(-input[i]));
         });
         return output;
     }
@@ -18,7 +18,8 @@ public class ReLuActivationFunction
         double[] output = new double[input.Length];
         Parallel.For(0, input.Length, i =>
         {
-            output[i] = input[i] > 0 ? 1 : 0;
+            double value = 1.0 / (1.0 + Math.Exp(-input[i]));
+            output[i] = value * (1 - value);
         });
         return output;
     }
