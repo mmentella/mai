@@ -1,15 +1,17 @@
-﻿namespace mai.v1;
+﻿using mai.v1.tensor;
+
+namespace mai.v1;
 
 public interface ILayer
 {
-    void Backward(double[] input, double[] outputError, double learningRate);
-    void Forward(double[] input);
+    void Backward(Tensor input, Tensor outputError, double learningRate);
+    void Forward(Tensor input);
 
     void Stack(ILayer layer);
     void SetNextLayer(ILayer layer);
     void SetPreviousLayer(ILayer layer);
 
-    double[] Output { get; }
+    Tensor Output { get; }
     ILayer? PreviousLayer { get; }
     ILayer? NextLayer { get; }
 }

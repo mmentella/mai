@@ -35,7 +35,7 @@ public class Optimizer
         return neuron;
     }
 
-    private double MeanSquaredErrorGradient(double output, double prediction)
+    private static double MeanSquaredErrorGradient(double output, double prediction)
     => prediction - output;
 
     private static double MeanSquaredError(double output, double prediction)

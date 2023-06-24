@@ -1,26 +1,44 @@
-﻿namespace mai.v1.activation;
+﻿using mai.v1.tensor;
+
+namespace mai.v1.activation;
 
 public class SoftmaxActivationFunction
     : ActivationFunction
 {
-    private double[] output = Array.Empty<double>();
+    private Tensor output = default!;
 
-    public override double[] Forward(double[] input)
+    public override Tensor Forward(Tensor input)
     {
-        IEnumerable<double> exp = input.Select(Math.Exp);
-        double sum = 1d / exp.Sum();
+        output = new Tensor(input.Shape);
+        double sum = 0;
+        for (int i = 0; i < input.Length; i++)
+        {
+            output[i] = Math.Exp(input[i]);
+            sum += output[i];
+        }
 
-        output = exp.Select(x => x * sum).ToArray();
+        for (int i = 0; i < input.Length; i++)
+        {
+            output[i] /= sum;
+        }
 
         return output;
     }
 
-    public override double[] Backward(double[] gradient)
+    public override Tensor Backward(Tensor gradient)
     {
-        double[] outputGradient = new double[gradient.Length];
+        Tensor outputGradient = new(output.Shape[0], output.Shape[0]);
         for (int i = 0; i < gradient.Length; i++)
         {
-            outputGradient[i] = gradient[i] * (output[i] * (1 - output[i]));
+            for (int j = 0; j < gradient.Length; j++)
+            {
+                if (i == j)
+                {
+                    outputGradient[i, j] = gradient[i] * output[i] * (1 - output[i]);
+                    continue;
+                }
+                outputGradient[i, j] = -output[i] * output[j] * gradient[i];
+            }
         }
         return outputGradient;
     }

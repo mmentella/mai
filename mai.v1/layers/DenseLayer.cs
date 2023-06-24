@@ -1,4 +1,6 @@
-﻿namespace mai.v1.layers;
+﻿using mai.v1.tensor;
+
+namespace mai.v1.layers;
 
 public class DenseLayer
     : ILayer
@@ -7,8 +9,8 @@ public class DenseLayer
     {
         InputSize = inputSize;
         OutputSize = outputSize;
-        Weights = new double[inputSize * outputSize];
-        Biases = new double[outputSize];
+        Weights = new Tensor(inputSize, outputSize);
+        Biases = new Tensor(outputSize);
 
         linearLayer = new LinearLayer(inputSize, outputSize);
         activationLayer = new ActivationLayer(activationFunction);
@@ -20,23 +22,23 @@ public class DenseLayer
 
     public int InputSize { get; private set; }
     public int OutputSize { get; private set; }
-    public double[] Weights { get; private set; }
-    public double[] Biases { get; private set; }
+    public Tensor Weights { get; private set; }
+    public Tensor Biases { get; private set; }
 
     private readonly LinearLayer linearLayer;
     private readonly ActivationLayer activationLayer;
 
-    public double[] Output { get; private set; }
+    public Tensor Output { get; private set; }
 
     public ILayer? PreviousLayer { get; private set; }
     public ILayer? NextLayer { get; private set; }
 
-    public void Backward(double[] input, double[] outputError, double learningRate)
+    public void Backward(Tensor input, Tensor outputError, double learningRate)
     {
         activationLayer.Backward(input, outputError, learningRate);
     }
 
-    public void Forward(double[] input)
+    public void Forward(Tensor input)
     {
         linearLayer.Forward(input);
         Output = activationLayer.Output;

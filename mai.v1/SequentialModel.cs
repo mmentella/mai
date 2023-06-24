@@ -1,10 +1,12 @@
-﻿namespace mai.v1;
+﻿using mai.v1.tensor;
+
+namespace mai.v1;
 
 public class SequentialModel
 {
     private readonly List<ILayer> layers = new();
 
-    public double[] Forward(double[] input)
+    public Tensor Forward(Tensor input)
     {
         ILayer firstLayer = layers[0];
         ILayer lastLayer = layers[^1];
@@ -14,7 +16,7 @@ public class SequentialModel
         return lastLayer.Output;
     }
 
-    public void Backward(double[] input, double[] outputGradient, double learningRate)
+    public void Backward(Tensor input, Tensor outputGradient, double learningRate)
     {
         ILayer lastLayer = layers[^1];
         lastLayer.Backward(input, outputGradient, learningRate);

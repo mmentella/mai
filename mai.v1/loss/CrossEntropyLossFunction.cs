@@ -1,19 +1,21 @@
-﻿namespace mai.v1.loss;
+﻿using mai.v1.tensor;
+
+namespace mai.v1.loss;
 
 public class CrossEntropyLossFunction
     : LossFunction
 {
-    public override double[] GradientLoss(double[] actualOutput, double[] expectedOutput)
+    public override Tensor GradientLoss(Tensor actualOutput, Tensor expectedOutput)
     {
-        double[] output = new double[actualOutput.Length];
+        Tensor output = new Tensor(actualOutput.Shape);
         Parallel.For(0, actualOutput.Length, i =>
         {
-            output[i] = actualOutput[i] - expectedOutput[i];
+            output[i] = expectedOutput[i] / actualOutput[i];
         });
         return output;
     }
 
-    public override double Loss(double[] actualOutput, double[] expectedOutput)
+    public override double Loss(Tensor actualOutput, Tensor expectedOutput)
     {
         double loss = 0;
         for (int i = 0; i < actualOutput.Length; i++)

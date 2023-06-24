@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using mai.v1.tensor;
 
 namespace mai.v1.layers;
 
@@ -11,22 +7,22 @@ public class NormalizationLayer
 {
     public NormalizationLayer()
     {
-        Output = Array.Empty<double>();
+        Output = default!;
     }
 
-    public double[] Output { get; private set; }
+    public Tensor Output { get; private set; }
 
     public ILayer? PreviousLayer { get; private set; }
     public ILayer? NextLayer { get; private set; }
 
-    public void Backward(double[] input, double[] outputError, double learningRate)
+    public void Backward(Tensor input, Tensor outputError, double learningRate)
     {
         PreviousLayer?.Backward(input, outputError, learningRate);
     }
 
-    public void Forward(double[] input)
+    public void Forward(Tensor input)
     {
-        double[] normalizedInput = Normalize(input);
+        Tensor normalizedInput = Normalize(input);
         Output = normalizedInput;
         NextLayer?.Forward(Output);
     }
@@ -47,11 +43,11 @@ public class NormalizationLayer
         layer.SetPreviousLayer(this);
     }
 
-    private static double[] Normalize(double[] input)
+    private static Tensor Normalize(Tensor input)
     {
         double mean = Mean(input);
         double std = Std(input, mean);
-        double[] output = new double[input.Length];
+        Tensor output = new(input.Shape);
         for (int i = 0; i < input.Length; i++)
         {
             output[i] = (input[i] - mean) / std;
@@ -59,7 +55,7 @@ public class NormalizationLayer
         return output;
     }
 
-    private static double Std(double[] input, double mean)
+    private static double Std(Tensor input, double mean)
     {
         double sum = 0;
         for (int i = 0; i < input.Length; i++)
@@ -69,7 +65,7 @@ public class NormalizationLayer
         return Math.Sqrt(sum / input.Length);
     }
 
-    private static double Mean(double[] input)
+    private static double Mean(Tensor input)
     {
         double sum = 0;
         for (int i = 0; i < input.Length; i++)

@@ -2,7 +2,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 
-namespace mai.tensor
+namespace mai.v1.tensor
 {
     public class Tensor
     {
@@ -107,6 +107,7 @@ namespace mai.tensor
                                 .AsTensor(shape, stride);
             return tensor;
         }
+
 
         public Tensor Contraction(Tensor right, params int[][] axes)
         {

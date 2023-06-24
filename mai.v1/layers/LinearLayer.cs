@@ -1,25 +1,27 @@
-﻿namespace mai.v1.layers;
+﻿using mai.v1.tensor;
+
+namespace mai.v1.layers;
 
 public class LinearLayer
     : ILayer
 {
     public int InputSize { get; private set; }
     public int OutputSize { get; private set; }
-    public double[] Weights { get; private set; }
-    public double[] Biases { get; private set; }
+    public Tensor Weights { get; private set; }
+    public Tensor Biases { get; private set; }
 
     public ILayer? PreviousLayer { get; private set; }
     public ILayer? NextLayer { get; private set; }
 
-    public double[] Output { get; private set; }
+    public Tensor Output { get; private set; }
 
     public LinearLayer(int inputSize, int outputSize)
     {
         InputSize = inputSize;
         OutputSize = outputSize;
-        Weights = new double[inputSize * outputSize];
-        Biases = new double[outputSize];
-        Output = Array.Empty<double>();
+        Weights = new Tensor(inputSize, outputSize);
+        Biases = new Tensor(outputSize);
+        Output = default!;
 
         Random random = new();
         for (int i = 0; i < OutputSize; i++)
@@ -32,30 +34,30 @@ public class LinearLayer
         }
     }
 
-    public void Forward(double[] input)
+    public void Forward(Tensor input)
     {
-        double[] output = new double[OutputSize];
+        Tensor output = new(OutputSize);
         for (int i = 0; i < OutputSize; i++)
         {
             output[i] = Biases[i];
             for (int j = 0; j < InputSize; j++)
             {
-                output[i] += input[j] * Weights[j * OutputSize + i];
+                output[i] += input[j] * Weights[i, j];
             }
         }
         Output = output;
         NextLayer?.Forward(output);
     }
 
-    public void Backward(double[] input, double[] outputError, double learningRate)
+    public void Backward(Tensor input, Tensor outputError, double learningRate)
     {
-        double[] inputError = new double[InputSize];
+        Tensor inputError = new(InputSize);
         for (int i = 0; i < OutputSize; i++)
         {
             Biases[i] -= learningRate * outputError[i];
             for (int j = 0; j < InputSize; j++)
             {
-                Weights[j * OutputSize + i] -= learningRate * outputError[i] * input[j];
+                Weights[i, j] -= learningRate * outputError[i] * input[j];
                 inputError[j] += outputError[i] * Weights[j * OutputSize + i];
             }
         }

@@ -1,8 +1,10 @@
-﻿namespace mai.v1;
+﻿using mai.v1.tensor;
+
+namespace mai.v1;
 
 public abstract class ActivationFunction
 {
-    public abstract double[] Forward(double[] input);
+    public abstract Tensor Forward(Tensor input);
 
-    public abstract double[] Backward(double[] gradient);
+    public abstract Tensor Backward(Tensor gradient);
 }
