@@ -1,10 +1,10 @@
-﻿using mai.v1.tensor;
+﻿using mai.v1.blas;
 
 namespace mai.v1;
 
 public abstract class ActivationFunction
 {
-    public abstract Tensor Forward(Tensor input);
+    public abstract Matrix Forward(Matrix input);
 
-    public abstract Tensor Backward(Tensor gradient);
+    public abstract Matrix Backward(Matrix gradient);
 }

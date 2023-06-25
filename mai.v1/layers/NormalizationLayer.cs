@@ -1,4 +1,4 @@
-﻿using mai.v1.tensor;
+﻿using mai.v1.blas;
 
 namespace mai.v1.layers;
 
@@ -10,19 +10,19 @@ public class NormalizationLayer
         Output = default!;
     }
 
-    public Tensor Output { get; private set; }
+    public Matrix Output { get; private set; }
 
     public ILayer? PreviousLayer { get; private set; }
     public ILayer? NextLayer { get; private set; }
 
-    public void Backward(Tensor input, Tensor outputError, double learningRate)
+    public void Backward(Matrix input, Matrix outputError, double learningRate)
     {
         PreviousLayer?.Backward(input, outputError, learningRate);
     }
 
-    public void Forward(Tensor input)
+    public void Forward(Matrix input)
     {
-        Tensor normalizedInput = Normalize(input);
+        Matrix normalizedInput = Normalize(input);
         Output = normalizedInput;
         NextLayer?.Forward(Output);
     }
@@ -43,11 +43,11 @@ public class NormalizationLayer
         layer.SetPreviousLayer(this);
     }
 
-    private static Tensor Normalize(Tensor input)
+    private static Matrix Normalize(Matrix input)
     {
         double mean = Mean(input);
         double std = Std(input, mean);
-        Tensor output = new(input.Shape);
+        Matrix output = new(input.Rows, input.Columns);
         for (int i = 0; i < input.Length; i++)
         {
             output[i] = (input[i] - mean) / std;
@@ -55,7 +55,7 @@ public class NormalizationLayer
         return output;
     }
 
-    private static double Std(Tensor input, double mean)
+    private static double Std(Matrix input, double mean)
     {
         double sum = 0;
         for (int i = 0; i < input.Length; i++)
@@ -65,7 +65,7 @@ public class NormalizationLayer
         return Math.Sqrt(sum / input.Length);
     }
 
-    private static double Mean(Tensor input)
+    private static double Mean(Matrix input)
     {
         double sum = 0;
         for (int i = 0; i < input.Length; i++)

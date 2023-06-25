@@ -1,13 +1,13 @@
-﻿using mai.v1.tensor;
+﻿using mai.v1.blas;
 
 namespace mai.v1.activation;
 
 public class TanhActivationFunction
     : ActivationFunction
 {
-    public override Tensor Forward(Tensor input)
+    public override Matrix Forward(Matrix input)
     {
-        Tensor output = new(input.Shape);
+        Matrix output = new(input.Rows, input.Columns);
         Parallel.For(0, input.Length, i =>
         {
             output[i] = Math.Tanh(input[i]);
@@ -15,9 +15,9 @@ public class TanhActivationFunction
         return output;
     }
 
-    public override Tensor Backward(Tensor input)
+    public override Matrix Backward(Matrix input)
     {
-        Tensor output = new(input.Shape);
+        Matrix output = new(input.Rows, input.Columns);
         Parallel.For(0, input.Length, i =>
         {
             double value = Math.Tanh(input[i]);

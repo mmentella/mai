@@ -1,329 +1,328 @@
-﻿using System.Buffers;
-using System.Runtime.CompilerServices;
-using System.Text;
+﻿//using System.Buffers;
+//using System.Runtime.CompilerServices;
+//using System.Text;
 
-namespace mai.v1.tensor
-{
-    public class Tensor
-    {
-        private readonly double[] data;
+//namespace mai.v1.Matrix;
 
-        public Tensor(params int[] shape)
-            : this(shape, null, null) { }
+//public class Matrix
+//{
+//    private readonly double[] data;
 
-        public Tensor(double[] data, int[] shape)
-            : this(shape, data, null) { }
+//    public Matrix(params int[] shape)
+//        : this(shape, null, null) { }
 
-        public Tensor(int[] shape, double[]? data = default, int[]? stride = default)
-        {
-            Shape = shape;
-            Length = Shape.Length == 0 ? 0 :
-                     Shape.Aggregate((i, j) => i * j);
-            Stride = stride ?? BuildStride();
+//    public Matrix(double[] data, int[] shape)
+//        : this(shape, data, null) { }
 
-            this.data = data ?? new double[Length];
-        }
+//    public Matrix(int[] shape, double[]? data = default, int[]? stride = default)
+//    {
+//        Shape = shape;
+//        Length = Shape.Length == 0 ? 0 :
+//                 Shape.Aggregate((i, j) => i * j);
+//        Stride = stride ?? BuildStride();
 
-        public int[] Shape { get; }
-        public int[] Stride { get; }
-        public int Length { get; }
-        public int Rank => Shape.Length;
+//        this.data = data ?? new double[Length];
+//    }
 
-        public double this[params int[] indices]
-        {
-            get
-            {
-                indices.LessThanOrEqualsCheck(Shape);
+//    public int[] Shape { get; }
+//    public int[] Stride { get; }
+//    public int Length { get; }
+//    public int Rank => Shape.Length;
 
-                int offset = Offset(indices);
-                return data[offset];
-            }
-            set
-            {
-                indices.LessThanOrEqualsCheck(Shape);
+//    public double this[params int[] indices]
+//    {
+//        get
+//        {
+//            indices.LessThanOrEqualsCheck(Shape);
 
-                int offset = Offset(indices);
-                data[offset] = value;
-            }
-        }
+//            int offset = Offset(indices);
+//            return data[offset];
+//        }
+//        set
+//        {
+//            indices.LessThanOrEqualsCheck(Shape);
 
-        public double this[int index]
-        {
-            get => data[index];
-            set => data[index] = value;
-        }
+//            int offset = Offset(indices);
+//            data[offset] = value;
+//        }
+//    }
 
-        public Tensor Slice(int[] begin, int[] size)
-        {
-            int[] lastIndices = begin.Zip(size, (b, s) => b + s)
-                                     .ToArray();
-            lastIndices.LessThanOrEqualsCheck(Shape);
+//    public double this[int index]
+//    {
+//        get => data[index];
+//        set => data[index] = value;
+//    }
 
-            int start = Offset(begin);
-            int last = Offset(lastIndices);
+//    public Matrix Slice(int[] begin, int[] size)
+//    {
+//        int[] lastIndices = begin.Zip(size, (b, s) => b + s)
+//                                 .ToArray();
+//        lastIndices.LessThanOrEqualsCheck(Shape);
 
-            Tensor tensor = data.Skip(start)
-                                .Take(last)
-                                .ToArray()
-                                .AsTensor(size);
-            return tensor;
-        }
+//        int start = Offset(begin);
+//        int last = Offset(lastIndices);
 
-        public Queue<double[]> BufferData(int axis)
-        {
-            (0 <= axis && axis <= Rank).IfNotThrow<InvalidOperationException>();
+//        Matrix Matrix = data.Skip(start)
+//                            .Take(last)
+//                            .ToArray()
+//                            .AsMatrix(size);
+//        return Matrix;
+//    }
 
-            int[] current = new int[Rank];
-            Queue<double[]> axes = new();
+//    public Queue<double[]> BufferData(int axis)
+//    {
+//        (0 <= axis && axis <= Rank).IfNotThrow<InvalidOperationException>();
 
-            do
-            {
-                double[] data = new double[Shape[axis]];
-                for (int i = 0; i < Shape[axis]; i++)
-                {
-                    current[axis] = i;
-                    data[i] = this.data[Offset(current)];
-                }
+//        int[] current = new int[Rank];
+//        Queue<double[]> axes = new();
 
-                axes.Enqueue(data);
-            } while (IncrementIndex(current, axis));
+//        do
+//        {
+//            double[] data = new double[Shape[axis]];
+//            for (int i = 0; i < Shape[axis]; i++)
+//            {
+//                current[axis] = i;
+//                data[i] = this.data[Offset(current)];
+//            }
 
-            return axes;
-        }
+//            axes.Enqueue(data);
+//        } while (IncrementIndex(current, axis));
 
-        public Tensor Reshape(params int[] shape)
-        {
-            Tensor tensor = data.ToArray()
-                                .AsTensor(shape);
-            return tensor;
-        }
+//        return axes;
+//    }
 
-        public Tensor Reduce()
-        {
-            int[] shape = Shape.Skip(1).ToArray();
-            int[] stride = Stride.Skip(1).ToArray();
+//    public Matrix Reshape(params int[] shape)
+//    {
+//        Matrix Matrix = data.ToArray()
+//                            .AsMatrix(shape);
+//        return Matrix;
+//    }
 
-            Tensor tensor = data.ToArray()
-                                .AsTensor(shape, stride);
-            return tensor;
-        }
+//    public Matrix Reduce()
+//    {
+//        int[] shape = Shape.Skip(1).ToArray();
+//        int[] stride = Stride.Skip(1).ToArray();
+
+//        Matrix Matrix = data.ToArray()
+//                            .AsMatrix(shape, stride);
+//        return Matrix;
+//    }
 
 
-        public Tensor Contraction(Tensor right, params int[][] axes)
-        {
-            (axes[0].Length == axes[1].Length)
-                .IfNotThrow<InvalidOperationException>();
-            axes[0].Zip(axes[1], (l, r) => Shape[l] == right.Shape[r])
-                   .All(b => b)
-                   .IfNotThrow<InvalidOperationException>();
+//    public Matrix Contraction(Matrix right, params int[][] axes)
+//    {
+//        (axes[0].Length == axes[1].Length)
+//            .IfNotThrow<InvalidOperationException>();
+//        axes[0].Zip(axes[1], (l, r) => Shape[l] == right.Shape[r])
+//               .All(b => b)
+//               .IfNotThrow<InvalidOperationException>();
 
-            List<int> shapeListLeft = Shape.ToList();
-            Array.ForEach(axes[0], a => shapeListLeft.RemoveAt(a));
+//        List<int> shapeListLeft = Shape.ToList();
+//        Array.ForEach(axes[0], a => shapeListLeft.RemoveAt(a));
 
-            List<int> shapeListRight = right.Shape.ToList();
-            Array.ForEach(axes[1], a => shapeListRight.RemoveAt(a));
+//        List<int> shapeListRight = right.Shape.ToList();
+//        Array.ForEach(axes[1], a => shapeListRight.RemoveAt(a));
 
-            int[] shape = shapeListLeft.Concat(shapeListRight)
-                                       .ToArray();
+//        int[] shape = shapeListLeft.Concat(shapeListRight)
+//                                   .ToArray();
 
-            int[] axesLeft = Enumerable.Range(0, Rank)
-                                       .Where(r => !axes[0].Contains(r))
-                                       .Concat(axes[0])
-                                       .ToArray();
-            int dimLeft = 1;
-            Array.ForEach(axes[0], a => dimLeft *= Shape[a]);
-            int[] shapeLeft = { shapeListLeft.Aggregate((i, j) => i * j), dimLeft };
+//        int[] axesLeft = Enumerable.Range(0, Rank)
+//                                   .Where(r => !axes[0].Contains(r))
+//                                   .Concat(axes[0])
+//                                   .ToArray();
+//        int dimLeft = 1;
+//        Array.ForEach(axes[0], a => dimLeft *= Shape[a]);
+//        int[] shapeLeft = { shapeListLeft.Aggregate((i, j) => i * j), dimLeft };
 
-            int[] axesRight = axes[1].Concat(Enumerable.Range(0, right.Rank)
-                                                       .Where(r => !axes[1].Contains(r)))
-                                     .ToArray();
-            int dimRight = 1;
-            Array.ForEach(axes[1], a => dimRight *= right.Shape[a]);
-            int[] shapeRight = { dimRight, shapeListRight.Aggregate((i, j) => i * j) };
+//        int[] axesRight = axes[1].Concat(Enumerable.Range(0, right.Rank)
+//                                                   .Where(r => !axes[1].Contains(r)))
+//                                 .ToArray();
+//        int dimRight = 1;
+//        Array.ForEach(axes[1], a => dimRight *= right.Shape[a]);
+//        int[] shapeRight = { dimRight, shapeListRight.Aggregate((i, j) => i * j) };
 
-            Tensor a = Transpose(axesLeft).Reshape(shapeLeft);
-            Tensor b = right.Transpose(axesRight).Reshape(shapeRight);
+//        Matrix a = Transpose(axesLeft).Reshape(shapeLeft);
+//        Matrix b = right.Transpose(axesRight).Reshape(shapeRight);
 
-            Tensor tensor = a.Dot(b);
+//        Matrix Matrix = a.Dot(b);
 
-            tensor = tensor.Reshape(shape);
-            return tensor;
-        }
+//        Matrix = Matrix.Reshape(shape);
+//        return Matrix;
+//    }
 
-        public Tensor Dot(Tensor right)
-        {
-            (Rank == right.Rank && Rank == 2).IfNotThrow<InvalidOperationException>();
+//    public Matrix Dot(Matrix right)
+//    {
+//        (Rank == right.Rank && Rank == 2).IfNotThrow<InvalidOperationException>();
 
-            Queue<double[]> rows = BufferData(1);
-            Queue<double[]> cols = right.BufferData(0);
+//        Queue<double[]> rows = BufferData(1);
+//        Queue<double[]> cols = right.BufferData(0);
 
-            int idx = 0;
-            double[] data = new double[Shape[0] * right.Shape[1]];
-            foreach (var row in rows)
-            {
-                foreach (var col in cols)
-                {
-                    data[idx] += row.Zip(col, (r, c) => r * c).Sum();
-                    idx++;
-                }
-            }
+//        int idx = 0;
+//        double[] data = new double[Shape[0] * right.Shape[1]];
+//        foreach (var row in rows)
+//        {
+//            foreach (var col in cols)
+//            {
+//                data[idx] += row.Zip(col, (r, c) => r * c).Sum();
+//                idx++;
+//            }
+//        }
 
-            int[] shape = { Shape[0], right.Shape[1] };
+//        int[] shape = { Shape[0], right.Shape[1] };
 
-            return data.AsTensor(shape);
-        }
+//        return data.AsMatrix(shape);
+//    }
 
-        public Tensor Transpose(params int[] axes)
-        {
-            if (Rank == 0) { return this; }
+//    public Matrix Transpose(params int[] axes)
+//    {
+//        if (Rank == 0) { return this; }
 
-            if (axes == null || axes.Length == 0)
-            {
-                axes = Enumerable.Range(0, Rank)
-                                 .Reverse()
-                                 .ToArray();
-            }
+//        if (axes == null || axes.Length == 0)
+//        {
+//            axes = Enumerable.Range(0, Rank)
+//                             .Reverse()
+//                             .ToArray();
+//        }
 
-            int[] shape = new int[Rank];
-            int[] stride = new int[Rank];
-            Array.ForEach(axes, a =>
-            {
-                shape[a] = Shape[axes[a]];
-                stride[a] = Stride[axes[a]];
-            });
+//        int[] shape = new int[Rank];
+//        int[] stride = new int[Rank];
+//        Array.ForEach(axes, a =>
+//        {
+//            shape[a] = Shape[axes[a]];
+//            stride[a] = Stride[axes[a]];
+//        });
 
-            Tensor tensor = new(shape, stride: stride);
-            tensor.Load(this);
+//        Matrix Matrix = new(shape, stride: stride);
+//        Matrix.Load(this);
 
-            return tensor;
-        }
+//        return Matrix;
+//    }
 
-        public void Fill(double value) =>
-            Array.Fill(data, value);
-        public void FillWithRange()
-        {
-            for (int l = 0; l < Length; l++) { data[l] = l; }
-        }
+//    public void Fill(double value) =>
+//        Array.Fill(data, value);
+//    public void FillWithRange()
+//    {
+//        for (int l = 0; l < Length; l++) { data[l] = l; }
+//    }
 
-        public void Load(Tensor tensor)
-        {
-            int[] index = new int[tensor.Rank];
-            int current = 0;
-            do
-            {
-                this[index] = tensor[Offset(index)/*current*/];
-                current++;
-            } while (IncrementIndex(index));
-        }
+//    public void Load(Matrix Matrix)
+//    {
+//        int[] index = new int[Matrix.Rank];
+//        int current = 0;
+//        do
+//        {
+//            this[index] = Matrix[Offset(index)/*current*/];
+//            current++;
+//        } while (IncrementIndex(index));
+//    }
 
-        public string Print()
-        {
-            StringBuilder stringBuilder = new();
+//    public string Print()
+//    {
+//        StringBuilder stringBuilder = new();
 
-            double max = data.Max();
-            int numbers = ((int)max).ToString().Length;
-            string format = stringBuilder.Append('0', numbers)
-                                         .Append(".############")
-                                         .ToString();
-            int maxLen = max.ToString(format)
-                            .TrimStart('0')
-                            .Length;
-            stringBuilder.Clear();
-            string placeholder = stringBuilder.Append(' ', maxLen)
-                                              .ToString();
-            stringBuilder.Clear();
+//        double max = data.Max();
+//        int numbers = ((int)max).ToString().Length;
+//        string format = stringBuilder.Append('0', numbers)
+//                                     .Append(".############")
+//                                     .ToString();
+//        int maxLen = max.ToString(format)
+//                        .TrimStart('0')
+//                        .Length;
+//        stringBuilder.Clear();
+//        string placeholder = stringBuilder.Append(' ', maxLen)
+//                                          .ToString();
+//        stringBuilder.Clear();
 
-            stringBuilder.Append('(')
-                         .Append('[', Rank);
+//        stringBuilder.Append('(')
+//                     .Append('[', Rank);
 
-            int[] index = new int[Rank];
-            string value = placeholder + (this[index] == 0 ? "0" :
-                                          this[index].ToString(format)
-                                                     .TrimStart('0'));
-            value = value[^maxLen..];
-            stringBuilder.Append(value);
+//        int[] index = new int[Rank];
+//        string value = placeholder + (this[index] == 0 ? "0" :
+//                                      this[index].ToString(format)
+//                                                 .TrimStart('0'));
+//        value = value[^maxLen..];
+//        stringBuilder.Append(value);
 
-            index[Rank - 1] = 1;
-            do
-            {
-                int closeParentheses = 0;
+//        index[Rank - 1] = 1;
+//        do
+//        {
+//            int closeParentheses = 0;
 
-                if (index[Rank - 1] == 0)
-                {
-                    stringBuilder.Append(']');
-                    closeParentheses++;
+//            if (index[Rank - 1] == 0)
+//            {
+//                stringBuilder.Append(']');
+//                closeParentheses++;
 
-                    for (int r = Rank - 2; r >= 0; r--)
-                    {
-                        if (index[r] == 0)
-                        {
-                            stringBuilder.Append(']');
-                            closeParentheses++;
-                        }
-                        else
-                        {
-                            for (int c = 0; c < closeParentheses; c++)
-                            {
-                                stringBuilder.Append(Environment.NewLine);
-                            }
-                            stringBuilder.Append(' ', r + 2)
-                                         .Append('[', Rank - 1 - r);
-                            break;
-                        }
-                    }
-                }
-                else { stringBuilder.Append(' '); }
+//                for (int r = Rank - 2; r >= 0; r--)
+//                {
+//                    if (index[r] == 0)
+//                    {
+//                        stringBuilder.Append(']');
+//                        closeParentheses++;
+//                    }
+//                    else
+//                    {
+//                        for (int c = 0; c < closeParentheses; c++)
+//                        {
+//                            stringBuilder.Append(Environment.NewLine);
+//                        }
+//                        stringBuilder.Append(' ', r + 2)
+//                                     .Append('[', Rank - 1 - r);
+//                        break;
+//                    }
+//                }
+//            }
+//            else { stringBuilder.Append(' '); }
 
-                value = placeholder + (this[index] == 0 ? "0" :
-                                       this[index].ToString(format)
-                                                  .TrimStart('0'));
-                value = value[^maxLen..];
-                stringBuilder.Append(value);
+//            value = placeholder + (this[index] == 0 ? "0" :
+//                                   this[index].ToString(format)
+//                                              .TrimStart('0'));
+//            value = value[^maxLen..];
+//            stringBuilder.Append(value);
 
-            } while (IncrementIndex(index));
+//        } while (IncrementIndex(index));
 
-            stringBuilder.Append(']', Rank)
-                         .Append($", Rank {Rank}, " +
-                                 $"Shape [{string.Join(", ", Shape)}]), " +
-                                 $"Length [{string.Join(", ", Length)}])");
+//        stringBuilder.Append(']', Rank)
+//                     .Append($", Rank {Rank}, " +
+//                             $"Shape [{string.Join(", ", Shape)}]), " +
+//                             $"Length [{string.Join(", ", Length)}])");
 
-            return stringBuilder.ToString();
-        }
+//        return stringBuilder.ToString();
+//    }
 
-        private int[] BuildStride()
-        {
-            int currentStride = 1;
-            int[] stride = new int[Shape.Length];
-            for (int i = stride.Length - 1; i >= 0; i--)
-            {
-                stride[i] = currentStride;
-                currentStride *= Shape[i];
-            }
+//    private int[] BuildStride()
+//    {
+//        int currentStride = 1;
+//        int[] stride = new int[Shape.Length];
+//        for (int i = stride.Length - 1; i >= 0; i--)
+//        {
+//            stride[i] = currentStride;
+//            currentStride *= Shape[i];
+//        }
 
-            return stride;
-        }
+//        return stride;
+//    }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int Offset(params int[] indices) =>
-            indices.Zip(Stride, (i, s) => i * s)
-                   .Sum();
+//    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+//    private int Offset(params int[] indices) =>
+//        indices.Zip(Stride, (i, s) => i * s)
+//               .Sum();
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private bool IncrementIndex(int[] index, int? skipAxis = null)
-        {
-            for (int i = Rank - 1; i >= 0; i--)
-            {
-                if (i == skipAxis) { continue; }
+//    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+//    private bool IncrementIndex(int[] index, int? skipAxis = null)
+//    {
+//        for (int i = Rank - 1; i >= 0; i--)
+//        {
+//            if (i == skipAxis) { continue; }
 
-                index[i]++;
-                if (index[i] >= Shape[i])
-                {
-                    index[i] = 0;
-                    continue;
-                }
-                return true;
-            }
-            return false;
-        }
-    }
-}
+//            index[i]++;
+//            if (index[i] >= Shape[i])
+//            {
+//                index[i] = 0;
+//                continue;
+//            }
+//            return true;
+//        }
+//        return false;
+//    }
+//}

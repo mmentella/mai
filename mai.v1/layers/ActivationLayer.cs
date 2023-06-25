@@ -1,4 +1,4 @@
-﻿using mai.v1.tensor;
+﻿using mai.v1.blas;
 
 namespace mai.v1.layers;
 
@@ -16,17 +16,17 @@ public class ActivationLayer
     public ILayer? PreviousLayer { get; private set; }
     public ILayer? NextLayer { get; private set; }
 
-    public Tensor Output { get; private set; }
+    public Matrix Output { get; private set; }
 
-    public void Backward(Tensor input, Tensor outputError, double learningRate)
+    public void Backward(Matrix input, Matrix outputError, double learningRate)
     {
-        Tensor gradient = activationFunction.Backward(input);
+        Matrix gradient = activationFunction.Backward(input);
         PreviousLayer?.Backward(gradient, outputError, learningRate);
     }
 
-    public void Forward(Tensor input)
+    public void Forward(Matrix input)
     {
-        Tensor activations = activationFunction.Forward(input);
+        Matrix activations = activationFunction.Forward(input);
         Output = activations;
         NextLayer?.Forward(activations);
     }

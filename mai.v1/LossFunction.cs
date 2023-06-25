@@ -1,9 +1,9 @@
-﻿using mai.v1.tensor;
+﻿using mai.v1.blas;
 
 namespace mai.v1;
 
 public abstract class LossFunction
 {
-    public abstract double Loss(Tensor output, Tensor expectedOutput);
-    public abstract Tensor GradientLoss(Tensor output, Tensor expectedOutput);
+    public abstract double Loss(Matrix output, Matrix expectedOutput);
+    public abstract Matrix GradientLoss(Matrix output, Matrix expectedOutput);
 }
