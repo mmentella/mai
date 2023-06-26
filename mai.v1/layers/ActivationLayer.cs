@@ -20,8 +20,8 @@ public class ActivationLayer
 
     public void Backward(Matrix input, Matrix outputError, double learningRate)
     {
-        Matrix gradient = activationFunction.Backward(input);
-        PreviousLayer?.Backward(gradient, outputError, learningRate);
+        Matrix gradient = activationFunction.Backward(outputError);
+        PreviousLayer?.Backward(input, gradient, learningRate);
     }
 
     public void Forward(Matrix input)

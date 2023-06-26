@@ -20,8 +20,8 @@ public class CrossEntropyLossFunction
         double loss = 0;
         for (int i = 0; i < actualOutput.Length; i++)
         {
-            loss += expectedOutput[i] * Math.Log(actualOutput[i]);
+            loss += -expectedOutput[i] * Math.Log(actualOutput[i]);
         }
-        return -loss;
+        return loss;
     }
 }

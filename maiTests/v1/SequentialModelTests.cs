@@ -1,10 +1,12 @@
-﻿using mai.v1;
+﻿using mai.v1.blas;
+using mai.v1;
 using mai.v1.activation;
 using mai.v1.layers;
 using mai.v1.loss;
 using System;
 using System.Collections.Generic;
 using Xunit;
+using System.Diagnostics;
 
 namespace maiTests.v1;
 
@@ -14,58 +16,43 @@ public class SequentialModelTests
     public void ForwardTest()
     {
         SequentialModel model = new();
-        model.Add(new LinearLayer(15, 5));
-        model.Add(new ActivationLayer(new ESwishActivationFunction(1.25)));
-        model.Add(new LinearLayer(5, 15));
-        model.Add(new ActivationLayer(new SoftmaxActivationFunction()));
+        model.Add(new CrossEntropySoftmaxLayer(5, 15));
 
-        LossFunction lossFunction = new CrossEntropyLossFunction();
-
-        //double crossEntropyLoss;
-        //bool @break = false;
-        //Tensor output;
-        //List<Tensor> input = new(){
-        //    new(new double[] { 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },new int[]{1,15}),
-        //    new(new double[] { 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },new int[]{1,15}),
-        //    new(new double[] { 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },new int[]{1,15}),
-        //    new(new double[] { 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },new int[]{1,15}),
-        //    new(new double[] { 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },new int[]{1,15}),
-        //    new(new double[] { 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },new int[]{1,15}),
-        //    new(new double[] { 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 },new int[]{1,15}),
-        //    new(new double[] { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 },new int[]{1,15}),
-        //    new(new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },new int[]{1,15}),
-        //    new(new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 },new int[]{1,15}),
-        //    new(new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 },new int[]{1,15}),
-        //    new(new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 },new int[]{1,15}),
-        //    new(new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },new int[]{1,15}),
-        //    new(new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 },new int[]{1,15}),
-        //    new(new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },new int[]{1,15}),
-        //};
-        //for (int i = 0; i < 10000; i++)
-        //{
-        //    crossEntropyLoss = 0;
-        //    input.Shuffle();
-        //    foreach (var item in input)
-        //    {
-        //        output = model.Forward(item);
-
-        //        double loss = lossFunction.Loss(output, item);
-        //        if (double.IsNaN(loss))
-        //        {
-        //            @break = true;
-        //            break;
-        //        }
-        //        Tensor gradientLoss = lossFunction.GradientLoss(output, item);
-        //        model.Backward(item, gradientLoss, 0.001);
-
-        //        crossEntropyLoss += loss;
-        //    }
-        //    Debug.WriteLine($"epoch: {i:0}|loss: {crossEntropyLoss:0.0000}");
-        //    if (@break)
-        //    {
-        //        break;
-        //    }
-        //}
+        double crossEntropyLoss;
+        bool @break = false;
+        Matrix output;
+        List<Matrix> input = new(){
+            new double[] { 1, 0, 0, 0, 0/*, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0*/ },
+            new double[] { 0, 1, 0, 0, 0/*, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0*/ },
+            new double[] { 0, 0, 1, 0, 0/*, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0*/ },
+            new double[] { 0, 0, 0, 1, 0/*, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0*/ },
+            new double[] { 0, 0, 0, 0, 1/*, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0*/ },
+            //new double[] { 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0 },
+            //new double[] { 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0 },
+            //new double[] { 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0 },
+            //new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0 },
+            //new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0 },
+            //new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0 },
+            //new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0 },
+            //new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0 },
+            //new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 },
+            //new double[] { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1 },
+        };
+        for (int i = 0; i < 10000; i++)
+        {
+            crossEntropyLoss = 0;
+            input.Shuffle();
+            foreach (var item in input)
+            {
+                output = model.Forward(item);
+                model.Backward(item,null)
+            }
+            Debug.WriteLine($"epoch: {i:0}|loss: {crossEntropyLoss:0.0000}");
+            if (@break)
+            {
+                break;
+            }
+        }
     }
 }
 

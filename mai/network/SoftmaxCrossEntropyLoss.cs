@@ -14,7 +14,7 @@ namespace mai.network
             this.epsilon = epsilon;
             singleOutput = false;
 
-            softmaxPrediction = default;
+            softmaxPrediction = default!;
         }
 
         public override Matrix InputGradient()

@@ -27,10 +27,10 @@ public class SoftmaxActivationFunction
 
     public override Matrix Backward(Matrix gradient)
     {
-        Matrix outputGradient = new(output.Rows, output.Rows);
-        for (int i = 0; i < gradient.Length; i++)
+        Matrix outputGradient = new(output.Columns, output.Columns);
+        for (int i = 0; i < outputGradient.Rows; i++)
         {
-            for (int j = 0; j < gradient.Length; j++)
+            for (int j = 0; j < outputGradient.Columns; j++)
             {
                 if (i == j)
                 {
