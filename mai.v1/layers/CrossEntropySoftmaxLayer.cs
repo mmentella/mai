@@ -7,7 +7,6 @@ namespace mai.v1.layers;
 public class CrossEntropySoftmaxLayer
     : ILayer
 {
-    private Matrix input;
     private Matrix output;
     private Matrix weightedInput;
     private ActivationFunction activationFunction;
@@ -23,7 +22,6 @@ public class CrossEntropySoftmaxLayer
         activationFunction = new SoftmaxActivationFunction();
         lossFunction = new CrossEntropyLossFunction();
 
-        input = default!;
         output = default!;
         weightedInput = default!;
     }
@@ -39,14 +37,15 @@ public class CrossEntropySoftmaxLayer
 
     public void Backward(Matrix input, Matrix outputError, double learningRate)
     {
-        Matrix dedwi = output - input;
-        Weights -= learningRate * (input * dedwi);
+        Matrix dedw = input.Transpose() * (output - input);
+
+        Weights -= learningRate * dedw;
     }
 
     public void Forward(Matrix input)
     {
-        this.input = input;
         weightedInput = input * Weights;
+
         output = activationFunction.Forward(weightedInput);
     }
 
@@ -64,5 +63,10 @@ public class CrossEntropySoftmaxLayer
     {
         NextLayer = layer;
         layer.SetPreviousLayer(this);
+    }
+
+    public double GetLoss(Matrix target)
+    {
+        return lossFunction.Loss(output, target);
     }
 }
