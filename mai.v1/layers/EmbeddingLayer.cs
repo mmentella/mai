@@ -40,6 +40,7 @@ public class EmbeddingLayer
     public Matrix Weights { get; private set; }
 
     public Matrix Output => output;
+    public Matrix EmbeddedOutput => weightedInput;
 
     public ILayer? PreviousLayer { get; private set; }
     public ILayer? NextLayer { get; private set; }
