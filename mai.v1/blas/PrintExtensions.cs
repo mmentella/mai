@@ -28,25 +28,15 @@ public static class PrintExtensions
         int rank = 2;
 
         StringBuilder stringBuilder = new();
-
-        //double max = values.Max();
-        int numbers = 6;//((int)max).ToString().Length;
-        string format = stringBuilder.Append('0', numbers)
-                                     .Append(".############")
-                                     .ToString();
-        int maxLen = 10;
-        stringBuilder.Clear();
-        string placeholder = stringBuilder.Append(' ', maxLen)
-                                          .ToString();
-        stringBuilder.Clear();
+        string format = "0.########";
 
         stringBuilder.Append('(')
                      .Append('[', rank);
 
         int[] index = new int[rank];
-        string value = placeholder + (values[Offset(index)] == 0 ? "0" :
-                                      values[Offset(index)].ToString(format));
-        value = value[^maxLen..];
+        string value = values[Offset(index)].ToString(format)
+                                            .PadLeft(format.Length);
+        value = value.Substring(0, Math.Min(value.Length, format.Length));
         stringBuilder.Append(value);
 
         index[rank - 1] = 1;
@@ -80,9 +70,9 @@ public static class PrintExtensions
             }
             else { stringBuilder.Append(' '); }
 
-            value = placeholder + (values[Offset(index)] == 0 ? "0" :
-                                   values[Offset(index)].ToString(format));
-            value = value[^maxLen..];
+            value = values[Offset(index)].ToString(format)
+                                         .PadLeft(format.Length);
+            value = value.Substring(0, Math.Min(value.Length, format.Length));
             stringBuilder.Append(value);
 
         } while (IncrementIndex(index));

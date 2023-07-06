@@ -1,6 +1,6 @@
 ﻿using mai.v1.blas;
 
-namespace mai.v1;
+namespace mai.v1.models;
 
 public class SequentialModel
 {
@@ -12,7 +12,7 @@ public class SequentialModel
         ILayer lastLayer = layers[^1];
 
         firstLayer.Forward(input);
-        
+
         return lastLayer.Output;
     }
 
@@ -24,14 +24,14 @@ public class SequentialModel
 
     public virtual void Add(ILayer layer)
     {
-        if(layers.Contains(layer))
+        if (layers.Contains(layer))
         {
             throw new ArgumentException("Layer already exists in model");
         }
 
         if (layers.Count == 0)
         {
-            layers.Add(layer); 
+            layers.Add(layer);
             return;
         }
 

@@ -199,6 +199,9 @@ public class Matrix
 
     public double Mean() => Sum() / Length;
 
+    public double Min() => data.Min();
+    public double Max() => data.Max();
+
     public double Variance()
     {
         double mean = Mean();

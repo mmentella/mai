@@ -1,7 +1,7 @@
 ﻿using FluentAssertions;
-using mai.v1;
 using mai.v1.blas;
 using mai.v1.layers;
+using mai.v1.models;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -59,7 +59,7 @@ public class SequentialModelTests
 
         _ = model.Forward(input[0]);
         Matrix firstEncoded = embeddingLayer.EmbeddedOutput;
-        
+
         _ = model.Forward(input[1]);
         Matrix secondEncoded = embeddingLayer.EmbeddedOutput;
     }
@@ -68,34 +68,43 @@ public class SequentialModelTests
     public async Task EurUsdMinutetrade()
     {
         CultureInfo cultureInfo = new("en-US");
-        string[] lines = await File.ReadAllLinesAsync(@"C:\Users\mtmentella\Source\github\mmentella\mai\maiTests\v1\EUR.USD-Minute-Trade.txt");
+        string[] lines = await File.ReadAllLinesAsync(@"C:\Users\Foxyh\source\github\mmentella\mai\maiTests\v1\EUR.USD-Minute-Trade.txt");
         double[] prices =
             lines.Select(l => l.Split(','))
                  .Select(l => new double[] { double.Parse(l[2], cultureInfo), double.Parse(l[5], cultureInfo) })
                  .SelectMany(p => p)
                  .Take(1000)
                  .ToArray();
-        IList<double[]> input = prices.HotEncode()
-                                      .ToList();
+        IDictionary<double, double[]> lookup = prices.HotEncodeLookup();
 
-        EmbeddingLayer embeddingLayer = new(input.First().Length, 10);
+        int window = 1;
+        IList<(double[] input, double[] output)> trainingSet = new List<(double[] input, double[] output)>();
+        for (int d = window; d < prices.Length - window; d++)
+        {
+            for (int i = -window; i <= window; i++)
+            {
+                if (i == 0) { continue; }
+                trainingSet.Add((lookup[prices[d]], lookup[prices[d + i]]));
+            }
+        }
+
+        EmbeddingLayer embeddingLayer = new(trainingSet[0].input.Length, 10);
 
         SequentialModel model = new();
         model.Add(embeddingLayer);
 
-        for (int i = 0; i < 10000; i++)
+        for (int epoch = 0; epoch < 10000; epoch++)
         {
-            input.Shuffle();
             double loss = 0;
-            foreach (var item in input)
+            foreach (var (input, output) in trainingSet)
             {
-                _ = model.Forward(item);
-                model.Backward(item, default!, 0.05);
+                _ = model.Forward(input);
+                model.Backward(output, default!, 0.01);
 
-                loss += embeddingLayer.GetLoss(item);
+                loss += embeddingLayer.GetLoss(output);
             }
 
-            Debug.WriteLine($"epoch: {i:0}|loss: {loss:0.0000}");
+            Debug.WriteLine($"epoch: {epoch:0}|loss: {loss:0.0000}");
         }
     }
 
@@ -103,18 +112,19 @@ public class SequentialModelTests
     public void GetPositionEncoding()
     {
         int sequenceLength = 10;
-        int embeddingSize = 2;
-        int n = 100;
+        int embeddingSize = 4;
+        int n = 10000;
 
         Matrix positionEncoding = new(sequenceLength, embeddingSize);
         for (int i = 0; i < sequenceLength; i++)
         {
             for (int j = 0; j < 0.5 * embeddingSize; j++)
             {
-                positionEncoding[i, 2*j] = Math.Sin(i / Math.Pow(n, 2*i / embeddingSize));
-                positionEncoding[i, 2*j + 1] = Math.Cos(i / Math.Pow(n, 2*i / embeddingSize));
+                positionEncoding[i, 2 * j] = Math.Sin(i / Math.Pow(n, 2 * i / embeddingSize));
+                positionEncoding[i, 2 * j + 1] = Math.Cos(i / Math.Pow(n, 2 * i / embeddingSize));
             }
         }
+        Debug.WriteLine(positionEncoding.Print());
     }
 
     [Fact]
@@ -172,16 +182,18 @@ public static class Utility
         }
     }
 
-    public static IEnumerable<double[]> HotEncode(this double[] prices)
+    public static IDictionary<double, double[]> HotEncodeLookup(this double[] prices)
     {
-        double[] unique = prices.Distinct()
-            .Order()
-            .ToArray();
-        for (int i = 0; i < unique.Length; i++)
+        IDictionary<double, double[]> lookup = new Dictionary<double, double[]>();
+        IEnumerable<double> unique = prices.Distinct()
+                                           .Order();
+        for (int i = 0; i < unique.Count(); i++)
         {
-            double[] hot = new double[unique.Length];
+            double[] hot = new double[unique.Count()];
             hot[i] = 1;
-            yield return hot;
+            lookup.Add(unique.ElementAt(i), hot);
         }
+
+        return lookup;
     }
 }
