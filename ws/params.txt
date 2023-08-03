@@ -1,0 +1,12 @@
+if date = 1230710 then begin
+ptal = 0.750;
+psal = 0.350;
+pkal = 0.500;
+ptas = 0.100;
+psas = 0.400;
+pkas = 0.275;
+plookl = 1.000;
+plooks = 5.000;
+ok = 1;
+end;
+
