@@ -21,7 +21,7 @@ sns.countplot(x="label", data=df)
 #plt.show()
 
 # Encode Output Class
-class2idx = {"FLAT": 0, "LONG": 1, "SHORT": 2}
+class2idx = {"SHORT": 0, "LONG": 1}
 
 idx2class = {v: k for k, v in class2idx.items()}
 
@@ -56,23 +56,19 @@ X_test, y_test = np.array(X_test), np.array(y_test)
 # Visualize Class Distribution in Train, Val, and Test
 def get_class_distribution(obj):
     count_dict = {
-        "flat": 0,
-        "long": 0,
         "short": 0,
+        "long": 0,
     }
 
     for i in obj:
         if i == 0:
-            count_dict["flat"] += 1
+            count_dict["short"] += 1
         elif i == 1:
             count_dict["long"] += 1
-        elif i == 2:
-            count_dict["short"] += 1
         else:
             print("Check classes.")
 
     return count_dict
-
 
 fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(25, 7))
 # Train
@@ -142,11 +138,11 @@ weighted_sampler = WeightedRandomSampler(
 )
 
 # model parameters
-EPOCHS = 100
+EPOCHS = 200
 BATCH_SIZE = 16
 LEARNING_RATE = 0.0007
 NUM_FEATURES = len(X.columns)
-NUM_CLASSES = 3
+NUM_CLASSES = 2
 
 train_loader = DataLoader(
     dataset=train_dataset, batch_size=BATCH_SIZE, sampler=weighted_sampler

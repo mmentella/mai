@@ -1,14 +1,16 @@
-import torch.nn as nn
-import torch
-import torch.optim as optim
+import copy
+
 import matplotlib.pyplot as plt
-import pandas as pd
 import numpy as np
+import pandas as pd
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import tqdm
+from imblearn.over_sampling import SMOTE
+from sklearn.metrics import roc_curve
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.metrics import roc_curve
-import tqdm
-import copy
 
 # read data
 data = pd.read_csv("pytorch\\data\\buysell.csv", header=0)
@@ -72,8 +74,8 @@ def model_train(model, X_train, y_train, X_val, y_val):
     loss_fn = nn.BCELoss()  # binary cross entropy
     optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
-    n_epochs = 300  # number of epochs to run
-    batch_size = 10  # size of each batch
+    n_epochs = 100  # number of epochs to run
+    batch_size = 16  # size of each batch
     batch_start = torch.arange(0, len(X_train), batch_size)
 
     # Hold the best model
@@ -114,6 +116,11 @@ def model_train(model, X_train, y_train, X_val, y_val):
 
 # train-test split: Hold out the test set for final model evaluation
 X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.7, shuffle=True)
+
+sm = SMOTE()
+X_train, y_train = sm.fit_resample(X_train, y_train)
+X_train = torch.tensor(scaler.fit_transform(X_train), dtype=torch.float32)
+y_train = torch.tensor(y_train, dtype=torch.float32).reshape(-1, 1)
 
 # define 5-fold cross validation test harness
 kfold = StratifiedKFold(n_splits=5, shuffle=True)

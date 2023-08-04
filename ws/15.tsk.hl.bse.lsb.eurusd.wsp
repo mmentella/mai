@@ -14,14 +14,14 @@
 	ContainerHeight = '654'
 	ContainerWidth = '1413'
 	Flags = '2'
-	Height = '59'
-	Left = '3708'
+	Height = '56'
+	Left = '5785'
 	MinX = '-1'
 	MinY = '-1'
 	State = '3'
 	Top = '0'
 	ViewType = '0'
-	Width = '276934'
+	Width = '432202'
 
 [Wsp\Window_0\ChartManager]
 	ChartCount = '1'
@@ -141,8 +141,8 @@
 	ManualMode = '0'
 	MarginBottom = '5'
 	MarginTop = '5'
-	Maximum = '1,10533722222222'
-	Minimum = '1,09379277777778'
+	Maximum = '1,11628833333333'
+	Minimum = '1,08992166666667'
 	MovementSize.Long = '1'
 	MovementSize.Metric = 'False'
 	MovementSize.Price = '5'
@@ -200,14 +200,14 @@
 	Enabled = '0'
 	Style = '73984'
 	ValueType = '8'
-	Width = '1'
+	Width = '2'
 
 [Wsp\Window_0\ChartManager\Chart_0\Series_0\Styler\BarStyle\Line1]
 	Color = '16776960'
 	Enabled = '0'
 	Style = '73984'
 	ValueType = '8'
-	Width = '1'
+	Width = '2'
 
 [Wsp\Window_0\ChartManager\Chart_0\Series_0\Styler\BarStyle\Line10]
 	Color = '15658671'
@@ -732,7 +732,7 @@
 	Enabled = '0'
 	Style = '0'
 	ValueType = '8'
-	Width = '1'
+	Width = '2'
 
 [Wsp\Window_0\ChartManager\Chart_0\Series_0\Styler\BarStyle\Line168]
 	Color = '65280'
@@ -942,7 +942,7 @@
 	Enabled = '0'
 	Style = '73984'
 	ValueType = '8'
-	Width = '1'
+	Width = '2'
 
 [Wsp\Window_0\ChartManager\Chart_0\Series_0\Styler\BarStyle\Line20]
 	Color = '12171775'
@@ -1555,7 +1555,7 @@
 
 [Wsp\Window_0\ChartManager\Chart_0\Series_0\Styler\SymbolType]
 	ChartType = '3'
-	SelectedBarTypeByChart = '4294967295:5 3:7 2147483647:5 '
+	SelectedBarTypeByChart = '4294967295:5 3:1 2147483647:5 '
 
 [Wsp\Window_0\ChartManager\Chart_0\Series_0\Styler\TPOOptions]
 	TPO_BARS_FRAME_ACTIVE = 'True'
@@ -2017,7 +2017,7 @@
 	ShowScrollBar = '2'
 
 [Wsp\Window_0\ChartManager\SessionBreak]
-	Color = '9143144'
+	Color = '8421504'
 	Enabled = '1'
 	Style = '4'
 	Width = '1'
@@ -3080,7 +3080,7 @@ The reserved words supported in Portfolio optimization:
 	TIF = '1'
 
 [Wsp\Window_0\ChartManager\TradePanelPlaceholder\TradePanelObject\PerAccountSetting\Settings\Settings\Item_0\Second\TIFDate]
-	Ticks = '638265971187090000'
+	Ticks = '638266711504560000'
 
 [Wsp\Window_0\ChartManager\TradePanelPlaceholder\TradePanelObject\Window]
 	Property_CalcPriceValue = '0'

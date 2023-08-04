@@ -18,7 +18,7 @@ scaler = StandardScaler()
 X_train_std = scaler.fit_transform(X_train)
 X_test_std = scaler.transform(X_test)
 
-reducer = UMAP(n_neighbors=15)
+reducer = UMAP(n_neighbors=5)
 embedding = reducer.fit_transform(X_train_std)
 
 labels = dict.fromkeys(y_train)
