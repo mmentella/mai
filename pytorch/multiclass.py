@@ -8,29 +8,37 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader, WeightedRandomSampler
 
-from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import LabelEncoder, MinMaxScaler
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, classification_report
 from tqdm import tqdm
 
-df = pd.read_csv("pytorch\\data\\buysell.csv")
-print(df.head())
+df = pd.read_csv("pytorch\\data\\mmai.transformers.features-15Minute-EUR.USD-RAW.csv")
+# print(df.head())
 
-# Class Distribution
-sns.countplot(x="label", data=df)
-plt.show()
+# # Class Distribution
+# sns.countplot(x="label", data=df)
+# plt.show()
 
-# Encode Output Class
-class2idx = {"FLAT": 0, "LONG": 1, "SHORT": 2}
+# # Encode Output Class
+# class2idx = {"LONG": 0, "SHORT": 1}
 
-idx2class = {v: k for k, v in class2idx.items()}
+# idx2class = {v: k for k, v in class2idx.items()}
 
-df["label"].replace(class2idx, inplace=True)
-print(df.head())
+# df["label"].replace(class2idx, inplace=True)
+# print(df.head())
 
 # Create Input and Output Data
-X = df.iloc[:, 0:24]
-y = df.iloc[:, 24]
+X = df.iloc[:, 1:-1]
+y = df.iloc[:, -1]
+
+encoder = LabelEncoder()
+encoder.fit(y)
+y = encoder.transform(y)
+
+idx2class = {k: v for k, v in enumerate(encoder.classes_)}
+# print(idx2class)
+# exit()
 
 # Train — Validation — Test
 # Split into train+val and test
@@ -74,32 +82,32 @@ def get_class_distribution(obj):
     return count_dict
 
 
-fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(25, 7))
-# Train
-sns.barplot(
-    data=pd.DataFrame.from_dict([get_class_distribution(y_train)]).melt(),
-    x="variable",
-    y="value",
-    hue="variable",
-    ax=axes[0],
-).set_title("Class Distribution in Train Set")
-# Validation
-sns.barplot(
-    data=pd.DataFrame.from_dict([get_class_distribution(y_val)]).melt(),
-    x="variable",
-    y="value",
-    hue="variable",
-    ax=axes[1],
-).set_title("Class Distribution in Val Set")
-# Test
-sns.barplot(
-    data=pd.DataFrame.from_dict([get_class_distribution(y_test)]).melt(),
-    x="variable",
-    y="value",
-    hue="variable",
-    ax=axes[2],
-).set_title("Class Distribution in Test Set")
-plt.show()
+# fig, axes = plt.subplots(nrows=1, ncols=3, figsize=(25, 7))
+# # Train
+# sns.barplot(
+#     data=pd.DataFrame.from_dict([get_class_distribution(y_train)]).melt(),
+#     x="variable",
+#     y="value",
+#     hue="variable",
+#     ax=axes[0],
+# ).set_title("Class Distribution in Train Set")
+# # Validation
+# sns.barplot(
+#     data=pd.DataFrame.from_dict([get_class_distribution(y_val)]).melt(),
+#     x="variable",
+#     y="value",
+#     hue="variable",
+#     ax=axes[1],
+# ).set_title("Class Distribution in Val Set")
+# # Test
+# sns.barplot(
+#     data=pd.DataFrame.from_dict([get_class_distribution(y_test)]).melt(),
+#     x="variable",
+#     y="value",
+#     hue="variable",
+#     ax=axes[2],
+# ).set_title("Class Distribution in Test Set")
+# plt.show()
 
 
 # Custom Dataset
@@ -126,30 +134,30 @@ test_dataset = ClassifierDataset(
 )
 
 # weighted sampling
-target_list = []
-for _, t in train_dataset:
-    target_list.append(t)
+# target_list = []
+# for _, t in train_dataset:
+#     target_list.append(t)
 
-target_list = torch.tensor(target_list)
-class_count = [i for i in get_class_distribution(y_train).values()]
-class_weights = 1.0 / torch.tensor(class_count, dtype=torch.float)
-print(class_weights)
+# target_list = torch.tensor(target_list)
+# class_count = [i for i in get_class_distribution(y_train).values()]
+# class_weights = 1.0 / torch.tensor(class_count, dtype=torch.float)
+# print(class_weights)
 
-class_weights_all = class_weights[target_list]
+# class_weights_all = class_weights[target_list]
 
-weighted_sampler = WeightedRandomSampler(
-    weights=class_weights_all, num_samples=len(class_weights_all), replacement=True
-)
+# weighted_sampler = WeightedRandomSampler(
+#     weights=class_weights_all, num_samples=len(class_weights_all), replacement=True
+# )
 
 # model parameters
 EPOCHS = 100
-BATCH_SIZE = 16
+BATCH_SIZE = 31
 LEARNING_RATE = 0.0007
 NUM_FEATURES = len(X.columns)
 NUM_CLASSES = 3
 
 train_loader = DataLoader(
-    dataset=train_dataset, batch_size=BATCH_SIZE, sampler=weighted_sampler
+    dataset=train_dataset, batch_size=BATCH_SIZE  # , sampler=weighted_sampler
 )
 val_loader = DataLoader(dataset=val_dataset, batch_size=1)
 test_loader = DataLoader(dataset=test_dataset, batch_size=1)
@@ -197,7 +205,7 @@ print(device)
 model = MulticlassClassification(num_feature=NUM_FEATURES, num_class=NUM_CLASSES)
 model.to(device)
 
-criterion = nn.CrossEntropyLoss(weight=class_weights.to(device))
+criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
 print(model)
 
@@ -282,14 +290,14 @@ train_val_loss_df = (
     .rename(columns={"index": "epochs"})
 )
 # Plot the dataframes
-fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(20, 7))
-sns.lineplot(
-    data=train_val_acc_df, x="epochs", y="value", hue="variable", ax=axes[0]
-).set_title("Train-Val Accuracy/Epoch")
-sns.lineplot(
-    data=train_val_loss_df, x="epochs", y="value", hue="variable", ax=axes[1]
-).set_title("Train-Val Loss/Epoch")
-plt.show();
+# fig, axes = plt.subplots(nrows=1, ncols=2, figsize=(20, 7))
+# sns.lineplot(
+#     data=train_val_acc_df, x="epochs", y="value", hue="variable", ax=axes[0]
+# ).set_title("Train-Val Accuracy/Epoch")
+# sns.lineplot(
+#     data=train_val_loss_df, x="epochs", y="value", hue="variable", ax=axes[1]
+# ).set_title("Train-Val Loss/Epoch")
+# plt.show()
 
 # test the model
 y_pred_list = []

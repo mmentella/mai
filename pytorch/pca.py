@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-df = pd.read_csv("pytorch\\data\\buysell.csv")
-X, y = df.iloc[:, 0:24].values, df.iloc[:, 24].values
+df = pd.read_csv("pytorch\\data\\mmai.transformers.features.csv")
+X, y = df.iloc[:, 1:-1].values, df.iloc[:, -1].values
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=0.3, stratify=y, random_state=0
@@ -21,8 +21,8 @@ tot = sum(eigen_vals)
 var_exp = [(i / tot) for i in sorted(eigen_vals, reverse=True)]
 cum_var_exp = np.cumsum(var_exp)
 
-plt.bar(range(1,25),var_exp,align='center', label='Individual explained variance')
-plt.step(range(1,25),cum_var_exp,where='mid', label='Cumulative explained variance')
+plt.bar(range(1,65),var_exp,align='center', label='Individual explained variance')
+plt.step(range(1,65),cum_var_exp,where='mid', label='Cumulative explained variance')
 plt.ylabel('Explained Variance Ratio')
 plt.xlabel('Principal Component Index')
 plt.tight_layout()

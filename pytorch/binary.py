@@ -13,9 +13,9 @@ from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 # read data
-data = pd.read_csv("pytorch\\data\\buysell.csv", header=0)
-X = data.iloc[:, 0:24]
-y = data.iloc[:, 24]
+data = pd.read_csv("pytorch\\data\\mmai.transformers.features.csv", header=0)
+X = data.iloc[:, 1:-1]
+y = data.iloc[:, -1]
 
 encoder = LabelEncoder()
 encoder.fit(y)
@@ -26,11 +26,13 @@ scaler = StandardScaler()
 X = torch.tensor(scaler.fit_transform(X), dtype=torch.float32)
 y = torch.tensor(y, dtype=torch.float32).reshape(-1, 1)
 
-hidden_size_wide = 128
+input_dim = X.shape[1]
+
+hidden_size_wide = 512
 class Wide(nn.Module):
     def __init__(self):
         super().__init__()
-        self.hidden = nn.Linear(24, hidden_size_wide)
+        self.hidden = nn.Linear(input_dim, hidden_size_wide)
         self.act = nn.Tanh()
         self.output = nn.Linear(hidden_size_wide, 1)
         self.sigmoid = nn.Sigmoid()
@@ -40,11 +42,11 @@ class Wide(nn.Module):
         x = self.sigmoid(self.output(x))
         return x
 
-hidden_size_deep = 32
+hidden_size_deep = 37
 class Deep(nn.Module):
     def __init__(self):
         super().__init__()
-        self.layer1 = nn.Linear(24, hidden_size_deep)
+        self.layer1 = nn.Linear(input_dim, hidden_size_deep)
         self.act1 = nn.Tanh()
         self.layer2 = nn.Linear(hidden_size_deep, hidden_size_deep)
         self.act2 = nn.Tanh()
@@ -74,7 +76,7 @@ def model_train(model, X_train, y_train, X_val, y_val):
     loss_fn = nn.BCELoss()  # binary cross entropy
     optimizer = optim.Adam(model.parameters(), lr=0.0001)
 
-    n_epochs = 100  # number of epochs to run
+    n_epochs = 20  # number of epochs to run
     batch_size = 16  # size of each batch
     batch_start = torch.arange(0, len(X_train), batch_size)
 
@@ -117,10 +119,10 @@ def model_train(model, X_train, y_train, X_val, y_val):
 # train-test split: Hold out the test set for final model evaluation
 X_train, X_test, y_train, y_test = train_test_split(X, y, train_size=0.7, shuffle=True)
 
-sm = SMOTE()
-X_train, y_train = sm.fit_resample(X_train, y_train)
-X_train = torch.tensor(scaler.fit_transform(X_train), dtype=torch.float32)
-y_train = torch.tensor(y_train, dtype=torch.float32).reshape(-1, 1)
+# sm = SMOTE()
+# X_train, y_train = sm.fit_resample(X_train, y_train)
+# X_train = torch.tensor(scaler.fit_transform(X_train), dtype=torch.float32)
+# y_train = torch.tensor(y_train, dtype=torch.float32).reshape(-1, 1)
 
 # define 5-fold cross validation test harness
 kfold = StratifiedKFold(n_splits=5, shuffle=True)

@@ -11,17 +11,17 @@
 	WindowCount = '0'
 
 [Wsp\Window_0]
-	ContainerHeight = '654'
-	ContainerWidth = '1413'
+	ContainerHeight = '893'
+	ContainerWidth = '1690'
 	Flags = '2'
-	Height = '56'
-	Left = '5785'
+	Height = '435'
+	Left = '0'
 	MinX = '-1'
 	MinY = '-1'
 	State = '3'
 	Top = '0'
 	ViewType = '0'
-	Width = '432202'
+	Width = '2630'
 
 [Wsp\Window_0\ChartManager]
 	ChartCount = '1'
@@ -53,7 +53,7 @@
 	MergeDataSources = '0'
 
 [Wsp\Window_0\ChartManager\Chart_0\Series_0\DataSeries\Request]
-	AnchorFinishDate = '0'
+	AnchorFinishDate = '1'
 	BackTypeId = '274'
 	BackTypeName = 'Days Back'
 	BreakOnSession = '1'
@@ -77,9 +77,9 @@
 	ExpirationDate = '0'
 	FieldId = '201'
 	FieldName = 'Trade'
-	FinishDate2Id = '45141'
+	FinishDate2Id = '45167'
 	FinishDate2Name = ''
-	FinishDateId = '45141'
+	FinishDateId = '45166'
 	FinishDateName = ''
 	FootPrintChartType = '0'
 	KagiReversal = '0,0005'
@@ -141,8 +141,8 @@
 	ManualMode = '0'
 	MarginBottom = '5'
 	MarginTop = '5'
-	Maximum = '1,11628833333333'
-	Minimum = '1,08992166666667'
+	Maximum = '1,08828555555556'
+	Minimum = '1,07597444444444'
 	MovementSize.Long = '1'
 	MovementSize.Metric = 'False'
 	MovementSize.Price = '5'
@@ -1698,7 +1698,7 @@
 [Wsp\Window_0\ChartManager\IndexViewCalc]
 	BarSpacing = '5'
 	BarsToRight = '20'
-	BarsToRightValue = '54'
+	BarsToRightValue = '66'
 	ChartShiftViewType = '0'
 	ShowEmptyPeriod = '0'
 
@@ -2209,8 +2209,8 @@
 	isStatusWindowShow = '1'
 
 [Wsp\Window_0\ChartManager\Strategy\SignalObject_0]
-	IdName = 'sb_tskb2esampleb2egen'
-	Status = '0'
+	IdName = 'sb_mmaib2etransformersb2efeatures'
+	Status = '1'
 
 [Wsp\Window_0\ChartManager\Strategy\SignalObject_0\SignalHelper]
 	CalcRTAsHistory = '1'
@@ -2220,6 +2220,12 @@
 	IOGTypeExit = '1'
 	TimesPerBar = '1'
 	UseFreshSnapOnAdditionalDS = '1'
+
+[Wsp\Window_0\ChartManager\Strategy\SignalObject_0\SignalHelper\CustomInputHelperDT\Input_reset]
+	Value = 'false'
+
+[Wsp\Window_0\ChartManager\Strategy\SignalObject_0\SignalHelper\InputHelper\Input_reset]
+	Value = 'false'
 
 [Wsp\Window_0\ChartManager\Strategy\SignalObject_0\SignalHelper\Styles\OrderType: Buy Entry\ArrowProps]
 	Color = '16711680'
@@ -2366,8 +2372,8 @@
 	Width = '2'
 
 [Wsp\Window_0\ChartManager\Strategy\SignalObject_1]
-	IdName = 'sb_mmaib2efeatures'
-	Status = '1'
+	IdName = 'sb_mmaib2etransformersb2efeaturesb2eauto'
+	Status = '0'
 
 [Wsp\Window_0\ChartManager\Strategy\SignalObject_1\SignalHelper]
 	CalcRTAsHistory = '1'
@@ -2379,10 +2385,10 @@
 	UseFreshSnapOnAdditionalDS = '1'
 
 [Wsp\Window_0\ChartManager\Strategy\SignalObject_1\SignalHelper\Styles\OrderType: Buy Entry\ArrowProps]
-	Color = '16777215'
+	Color = '16711680'
 	OrderType = '257'
 	Style = '10'
-	Width = '2'
+	Width = '0'
 
 [Wsp\Window_0\ChartManager\Strategy\SignalObject_1\SignalHelper\Styles\OrderType: Buy Entry\ProfitLineProps]
 	OrderType = '257'
@@ -2401,10 +2407,10 @@
 	NameVisible = '1'
 
 [Wsp\Window_0\ChartManager\Strategy\SignalObject_1\SignalHelper\Styles\OrderType: Buy Entry\TickProps]
-	Color = '16777215'
+	Color = '16711680'
 	OrderType = '257'
 	Style = '5'
-	Width = '2'
+	Width = '0'
 
 [Wsp\Window_0\ChartManager\Strategy\SignalObject_1\SignalHelper\Styles\OrderType: Buy Entry\UnprofitLineProps]
 	OrderType = '257'
@@ -2451,10 +2457,10 @@
 	Width = '2'
 
 [Wsp\Window_0\ChartManager\Strategy\SignalObject_1\SignalHelper\Styles\OrderType: Sell Entry\ArrowProps]
-	Color = '16777215'
+	Color = '255'
 	OrderType = '513'
 	Style = '10'
-	Width = '2'
+	Width = '0'
 
 [Wsp\Window_0\ChartManager\Strategy\SignalObject_1\SignalHelper\Styles\OrderType: Sell Entry\ProfitLineProps]
 	OrderType = '257'
@@ -2473,10 +2479,10 @@
 	NameVisible = '1'
 
 [Wsp\Window_0\ChartManager\Strategy\SignalObject_1\SignalHelper\Styles\OrderType: Sell Entry\TickProps]
-	Color = '16777215'
+	Color = '255'
 	OrderType = '513'
 	Style = '5'
-	Width = '2'
+	Width = '0'
 
 [Wsp\Window_0\ChartManager\Strategy\SignalObject_1\SignalHelper\Styles\OrderType: Sell Entry\UnprofitLineProps]
 	OrderType = '257'
@@ -2528,7 +2534,7 @@
 	Confirm = 'False'
 	NeedActivateAT = 'False'
 	Profile = 'Interactive Brokers'
-	StrategyName = 'mmai.features'
+	StrategyName = 'mmai.transformers.features'
 	SymbolName = 'EUR.USD - 15 Minutes - Interactive Brokers'
 
 [Wsp\Window_0\ChartManager\Strategy\StrategyHelper\DynTradeOptimizeProps\Algorithm_0]
@@ -2998,7 +3004,7 @@ The reserved words supported in Portfolio optimization:
 	BTOFAMode = '0'
 	BTOFAPoints = '0'
 	BTOFA_TIF = '1'
-	BarReference = '0'
+	BarReference = '16'
 	BidIndex = '0'
 	CalcPnLInSymbolCurrency = '1'
 	CalcRealTimeAsHistory = '1'
@@ -3080,7 +3086,7 @@ The reserved words supported in Portfolio optimization:
 	TIF = '1'
 
 [Wsp\Window_0\ChartManager\TradePanelPlaceholder\TradePanelObject\PerAccountSetting\Settings\Settings\Item_0\Second\TIFDate]
-	Ticks = '638266711504560000'
+	Ticks = '638288553107380000'
 
 [Wsp\Window_0\ChartManager\TradePanelPlaceholder\TradePanelObject\Window]
 	Property_CalcPriceValue = '0'

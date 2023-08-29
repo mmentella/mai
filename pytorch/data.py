@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 
 from imblearn.over_sampling import SMOTE
 
+sns.set_theme(style="ticks")
+
 df = pd.read_csv("pytorch\\data\\buysell.csv")
 
 # Encode Output Class
@@ -15,16 +17,18 @@ idx2class = {v: k for k, v in class2idx.items()}
 df["label"].replace(class2idx, inplace=True)
 # print(df.head())
 
+sns.pairplot(df, hue="label")
+
 # sns.countplot(x = 'label', data=df)
-# plt.show()
+plt.show()
 
 # Create Input and Output Data
-X = df.iloc[:, 0:24]
-y = df.iloc[:, 24]
+# X = df.iloc[:, 0:24]
+# y = df.iloc[:, 24]
 
-print(y)
+# print(y)
 
-sm = SMOTE(random_state=12)
-X_smote, y_smote = sm.fit_resample(X, y)
+# sm = SMOTE(random_state=12)
+# X_smote, y_smote = sm.fit_resample(X, y)
 
-print(y_smote)
+# print(y_smote)
