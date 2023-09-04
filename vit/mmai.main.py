@@ -1,31 +1,42 @@
-import numpy as np
 import pandas as pd
+import numpy as np
 import seaborn as sns
-import matplotlib.pyplot as plt
+from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix, classification_report
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import confusion_matrix, classification_report
+import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-from vit.fx import MulticlassClassification
+from mmai import FxTransformer
 
-df = pd.read_csv("pytorch\\data\\mmai.transformers.features-1Days-EUR.USD-RAW.csv")
+# read csv
+data = pd.read_csv(
+    "pytorch\\data\\mmai.transformers.features-1Days-EUR.USD-RAW.csv",
+    header=0,
+)
+# exclude index
+data = data.iloc[:, 1:]
 
-# Create Input and Output Data
-X = df.iloc[:, 1:-1]
-y = df.iloc[:, -1]
+# prepare features and label
+X = data.iloc[:, 0:-1].values
+y = data.iloc[:, -1].values
 
-encoder = LabelEncoder()
-encoder.fit(y)
-y = encoder.transform(y)
+print(X.shape)
+print(y.shape)
 
-idx2class = {k: v for k, v in enumerate(encoder.classes_)}
+# label encoder
+labelEncoder = LabelEncoder()
+labelEncoder.fit(y)
+y = labelEncoder.transform(y)
+
+decodeLabel = {k: v for k, v in enumerate(labelEncoder.classes_)}
+print(decodeLabel)
 
 # Train — Validation — Test
 # Split into train+val and test
@@ -38,14 +49,6 @@ X_train, X_val, y_train, y_val = train_test_split(
     X_trainval, y_trainval, test_size=0.1, stratify=y_trainval, random_state=21
 )
 
-# Normalize Input
-scaler = StandardScaler()
-X_train = scaler.fit_transform(X_train)
-X_val = scaler.transform(X_val)
-X_test = scaler.transform(X_test)
-X_train, y_train = np.array(X_train), np.array(y_train)
-X_val, y_val = np.array(X_val), np.array(y_val)
-X_test, y_test = np.array(X_test), np.array(y_test)
 
 # Custom Dataset
 class ClassifierDataset(Dataset):
@@ -60,6 +63,11 @@ class ClassifierDataset(Dataset):
         return len(self.X_data)
 
 
+# model parameters
+EPOCHS = 20
+BATCH_SIZE = 32
+LEARNING_RATE = 0.001
+
 train_dataset = ClassifierDataset(
     torch.from_numpy(X_train).float(), torch.from_numpy(y_train).long()
 )
@@ -70,13 +78,6 @@ test_dataset = ClassifierDataset(
     torch.from_numpy(X_test).float(), torch.from_numpy(y_test).long()
 )
 
-# model parameters
-EPOCHS = 20
-BATCH_SIZE = 32
-LEARNING_RATE = 0.001
-NUM_FEATURES = 64
-NUM_CLASSES = 3
-
 train_loader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE)
 val_loader = DataLoader(dataset=val_dataset, batch_size=1)
 test_loader = DataLoader(dataset=test_dataset, batch_size=1)
@@ -84,12 +85,13 @@ test_loader = DataLoader(dataset=test_dataset, batch_size=1)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
-model = MulticlassClassification(NUM_FEATURES,NUM_CLASSES)
+# define moodel
+model = FxTransformer(patch_dim=8,sequence_len=8)
 model.to(device)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
-# print(model)
+
 print(sum([x.reshape(-1).shape[0] for x in model.parameters()]))
 
 
@@ -104,10 +106,6 @@ def multi_acc(y_pred, y_test):
     acc = torch.round(acc * 100)
 
     return acc
-
-
-accuracy_stats = {"train": [], "val": []}
-loss_stats = {"train": [], "val": []}
 
 ###################################
 print("Begin training.")
@@ -149,29 +147,10 @@ for e in tqdm(range(1, EPOCHS + 1), bar_format="{l_bar}{bar:10}{r_bar}{bar:-10b}
 
             val_epoch_loss += val_loss.item()
             val_epoch_acc += val_acc.item()
-    loss_stats["train"].append(train_epoch_loss / len(train_loader))
-    loss_stats["val"].append(val_epoch_loss / len(val_loader))
-    accuracy_stats["train"].append(train_epoch_acc / len(train_loader))
-    accuracy_stats["val"].append(val_epoch_acc / len(val_loader))
 
     print(
         f" Epoch {e+0:03}: | Train Loss: {train_epoch_loss/len(train_loader):.5f} | Val Loss: {val_epoch_loss/len(val_loader):.5f} | Train Acc: {train_epoch_acc/len(train_loader):.3f}| Val Acc: {val_epoch_acc/len(val_loader):.3f}"
     )
-
-# visualize loss and accuracy
-# Create dataframes
-train_val_acc_df = (
-    pd.DataFrame.from_dict(accuracy_stats)
-    .reset_index()
-    .melt(id_vars=["index"])
-    .rename(columns={"index": "epochs"})
-)
-train_val_loss_df = (
-    pd.DataFrame.from_dict(loss_stats)
-    .reset_index()
-    .melt(id_vars=["index"])
-    .rename(columns={"index": "epochs"})
-)
 
 # test the model
 y_pred_list = []
@@ -186,7 +165,7 @@ y_pred_list = [a.squeeze().tolist() for a in y_pred_list]
 
 # confusion matrix
 confusion_matrix_df = pd.DataFrame(confusion_matrix(y_test, y_pred_list)).rename(
-    columns=idx2class, index=idx2class
+    columns=decodeLabel, index=decodeLabel
 )
 
 sns.heatmap(confusion_matrix_df, annot=True)

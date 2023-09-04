@@ -14,14 +14,14 @@
 	ContainerHeight = '893'
 	ContainerWidth = '1690'
 	Flags = '2'
-	Height = '435'
+	Height = '274'
 	Left = '0'
 	MinX = '-1'
 	MinY = '-1'
 	State = '3'
 	Top = '0'
 	ViewType = '0'
-	Width = '2630'
+	Width = '3713'
 
 [Wsp\Window_0\ChartManager]
 	ChartCount = '1'
@@ -41,7 +41,7 @@
 
 [Wsp\Window_0\ChartManager\Chart_0\Series_0]
 	DataNumber = '0'
-	DrawingsCount = '0'
+	DrawingsCount = '1'
 	ResolutionLinkId = '0'
 	ResolutionWsGlobal = '0'
 	SeriesType = '1'
@@ -59,7 +59,7 @@
 	BreakOnSession = '1'
 	BuildDayFromMinutes = '0'
 	CallPut = '0'
-	CapacityId = '100'
+	CapacityId = '3000'
 	CapacityName = ''
 	Category = '9'
 	CategoryFilter = '254'
@@ -77,7 +77,7 @@
 	ExpirationDate = '0'
 	FieldId = '201'
 	FieldName = 'Trade'
-	FinishDate2Id = '45167'
+	FinishDate2Id = '45168'
 	FinishDate2Name = ''
 	FinishDateId = '45166'
 	FinishDateName = ''
@@ -101,9 +101,9 @@
 	RenkoBoxSize = '0,0005'
 	RenkoBoxSizeType = '0'
 	RequestOffline = '0'
-	ResolutionId = '2'
-	ResolutionName = 'Minute'
-	ResolutionSizeId = '15'
+	ResolutionId = '4'
+	ResolutionName = 'Day'
+	ResolutionSizeId = '1'
 	ResolutionSizeName = ''
 	SessionsId = '0'
 	SessionsName = 'Default'
@@ -129,6 +129,84 @@
 	VolumeType = '324'
 	VolumeTypeName = 'Tick Count'
 
+[Wsp\Window_0\ChartManager\Chart_0\Series_0\Drawing_0]
+	DrawingType = '15'
+	Number = '1'
+
+[Wsp\Window_0\ChartManager\Chart_0\Series_0\Drawing_0\Object]
+	Coord_Index_0 = '1137'
+	CreatedSymbolName = 'EUR.USD'
+	IsAnchorToBar = '1'
+	Lock = 'False'
+	Status = 'True'
+
+[Wsp\Window_0\ChartManager\Chart_0\Series_0\Drawing_0\Object\AlertObject]
+	AlertEnable = '0'
+	AlertType = '1'
+	PropertyCount = '8'
+
+[Wsp\Window_0\ChartManager\Chart_0\Series_0\Drawing_0\Object\AlertObject\Property_0]
+	PropertyName = '_Audio_Enable'
+	PropertyValue = '1'
+
+[Wsp\Window_0\ChartManager\Chart_0\Series_0\Drawing_0\Object\AlertObject\Property_1]
+	PropertyName = '_Audio_Sound'
+	PropertyValue = '1'
+
+[Wsp\Window_0\ChartManager\Chart_0\Series_0\Drawing_0\Object\AlertObject\Property_2]
+	PropertyName = '_Audio_Sound_File'
+	PropertyValue = 'ding.wav'
+
+[Wsp\Window_0\ChartManager\Chart_0\Series_0\Drawing_0\Object\AlertObject\Property_3]
+	PropertyName = '_Audio_Sound_Repeat'
+	PropertyValue = '0'
+
+[Wsp\Window_0\ChartManager\Chart_0\Series_0\Drawing_0\Object\AlertObject\Property_4]
+	PropertyName = '_Visual_Enable'
+	PropertyValue = '1'
+
+[Wsp\Window_0\ChartManager\Chart_0\Series_0\Drawing_0\Object\AlertObject\Property_5]
+	PropertyName = '_Visual_Timeout'
+	PropertyValue = '5'
+
+[Wsp\Window_0\ChartManager\Chart_0\Series_0\Drawing_0\Object\AlertObject\Property_6]
+	PropertyName = '_Email_Enable'
+	PropertyValue = '0'
+
+[Wsp\Window_0\ChartManager\Chart_0\Series_0\Drawing_0\Object\AlertObject\Property_7]
+	PropertyName = '_Email_Subject'
+	PropertyValue = 'MultiCharts64 Alert'
+
+[Wsp\Window_0\ChartManager\Chart_0\Series_0\Drawing_0\Object\Coordinate]
+	BarNumber = '0'
+	Price = '1,79769313486232E+308'
+
+[Wsp\Window_0\ChartManager\Chart_0\Series_0\Drawing_0\Object\Coordinate\DateTime]
+	Ticks = '636023196000000000'
+
+[Wsp\Window_0\ChartManager\Chart_0\Series_0\Drawing_0\Object\ExtendV]
+	ExtendV = '1'
+
+[Wsp\Window_0\ChartManager\Chart_0\Series_0\Drawing_0\Object\Label\Font]
+	Bold = '0'
+	Charset = '0'
+	Italic = '0'
+	Name = 'Arial'
+	Size = '9'
+	Strikethrough = '0'
+	Underline = '0'
+
+[Wsp\Window_0\ChartManager\Chart_0\Series_0\Drawing_0\Object\Label\Label]
+	Align = '32'
+	Attributes = '0'
+	Enabled = '1'
+	Orientation = '2'
+
+[Wsp\Window_0\ChartManager\Chart_0\Series_0\Drawing_0\Object\Style]
+	Color = '16776960'
+	Style = '0'
+	Width = '1'
+
 [Wsp\Window_0\ChartManager\Chart_0\Series_0\IntervalObject]
 	AxisType = '0'
 	Center = '0'
@@ -141,8 +219,8 @@
 	ManualMode = '0'
 	MarginBottom = '5'
 	MarginTop = '5'
-	Maximum = '1,08828555555556'
-	Minimum = '1,07597444444444'
+	Maximum = '1,16874166666667'
+	Minimum = '1,02690833333333'
 	MovementSize.Long = '1'
 	MovementSize.Metric = 'False'
 	MovementSize.Price = '5'
@@ -2535,7 +2613,7 @@
 	NeedActivateAT = 'False'
 	Profile = 'Interactive Brokers'
 	StrategyName = 'mmai.transformers.features'
-	SymbolName = 'EUR.USD - 15 Minutes - Interactive Brokers'
+	SymbolName = 'EUR.USD - 1 Day - Interactive Brokers'
 
 [Wsp\Window_0\ChartManager\Strategy\StrategyHelper\DynTradeOptimizeProps\Algorithm_0]
 	CFFScriptGenetic = '// TODO: Enter your formula to replace the samples below 
@@ -3004,7 +3082,7 @@ The reserved words supported in Portfolio optimization:
 	BTOFAMode = '0'
 	BTOFAPoints = '0'
 	BTOFA_TIF = '1'
-	BarReference = '16'
+	BarReference = '1'
 	BidIndex = '0'
 	CalcPnLInSymbolCurrency = '1'
 	CalcRealTimeAsHistory = '1'
@@ -3086,7 +3164,7 @@ The reserved words supported in Portfolio optimization:
 	TIF = '1'
 
 [Wsp\Window_0\ChartManager\TradePanelPlaceholder\TradePanelObject\PerAccountSetting\Settings\Settings\Item_0\Second\TIFDate]
-	Ticks = '638288553107380000'
+	Ticks = '638293741300170000'
 
 [Wsp\Window_0\ChartManager\TradePanelPlaceholder\TradePanelObject\Window]
 	Property_CalcPriceValue = '0'
