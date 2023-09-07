@@ -86,7 +86,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 print(device)
 
 # define moodel
-model = FxTransformer(patch_dim=8,sequence_len=8)
+model = FxTransformer(patch_dim=8,sequence_len=8,hidden_dim=128)
 model.to(device)
 
 criterion = nn.CrossEntropyLoss()

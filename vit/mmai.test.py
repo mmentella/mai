@@ -1,13 +1,11 @@
 import torch
 import torch.nn as nn
-
+import pandas as pd
 from einops import rearrange, repeat
 
-x = torch.randn(1,64)
-print(x.shape)
-x = rearrange(x, 'b (s p) -> b s p', s = 16,p=4)
-print(x.shape)
+x = torch.arange(1,5).reshape((2,2))
 
-x = torch.randn(1,1,4)
-x = repeat(x, '1 1 d -> b 1 d', b = 16)
-print(x.shape)
+mask = torch.ones_like(x[0])
+print(mask)
+mask = mask.tril(diagonal=0)
+print(mask)
