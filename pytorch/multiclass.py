@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 from vit.fx import MulticlassClassification
 
-df = pd.read_csv("pytorch\\data\\mmai.transformers.features-1Days-EUR.USD-RAW.csv")
+df = pd.read_csv("pytorch\\data\\mmai.vit.channels.features-1Days-EUR.USD-RAW.csv")
 
 # Create Input and Output Data
 X = df.iloc[:, 1:-1]

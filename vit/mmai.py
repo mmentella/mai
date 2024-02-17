@@ -17,6 +17,7 @@ class FxTransformer(nn.Module):
         num_heads: int = 2,
         num_encoders: int = 4,
         num_classes: int = 3,
+        p_dropout: float = 0.5
     ):
         super().__init__()
 
@@ -29,7 +30,7 @@ class FxTransformer(nn.Module):
         self.to_patch_embedding = nn.Sequential(
             Rearrange("b (s p) -> b s p", s=sequence_len, p=patch_dim),
             nn.LayerNorm(patch_dim),
-            nn.Linear(patch_dim, hidden_dim),
+            nn.Linear(patch_dim, hidden_dim, bias=False),
             nn.LayerNorm(hidden_dim),
         )
 
@@ -53,7 +54,7 @@ class FxTransformer(nn.Module):
             nn.Linear(hidden_dim, 2 * hidden_dim),
             nn.LayerNorm(2 * hidden_dim),
             nn.Sigmoid(),
-            nn.Dropout(),
+            nn.Dropout(p_dropout),
             nn.Linear(2 * hidden_dim, num_classes),
         )
 
@@ -96,6 +97,7 @@ class FxTransformerLayer(nn.Module):
         #   (1) a multihead self-attention block (MSA)
         #   (2) a fully connected feed-forward dense block (MLP)
         self.msa = FxMultiHeadAttention(dim, heads)
+        # self.msa = MultiHeadAttention(dim, dim, dim, heads)
         self.mlp = FxFeedForward(dim)
 
         # layer norm
@@ -106,12 +108,57 @@ class FxTransformerLayer(nn.Module):
         msa = self.msa(xnorm)
 
         msaresidual = msa + x
+        # msaresidual = msa[0] + x
 
         msanorm = self.norm(msaresidual)
 
         mlp = self.mlp(msanorm)
 
         return mlp + msanorm
+
+
+class MultiHeadAttention(torch.nn.Module):
+    def __init__(self, dim_model: int, dim_q: int, dim_v: int, num_heads: int):
+        super(MultiHeadAttention, self).__init__()
+
+        self.num_heads = num_heads
+        self.dim_q = dim_q
+
+        self.W_Q = torch.nn.Linear(
+            in_features=dim_model, out_features=dim_q * num_heads
+        )
+        self.W_K = torch.nn.Linear(
+            in_features=dim_model, out_features=dim_q * num_heads
+        )
+        self.W_V = torch.nn.Linear(
+            in_features=dim_model, out_features=dim_v * num_heads
+        )
+        self.W_out = torch.nn.Linear(
+            in_features=dim_v * num_heads, out_features=dim_model
+        )
+
+        self.inf = -(2**32) + 1
+        self.device = "cuda:0" if torch.cuda.is_available() else "cpu"
+
+    def forward(self, x: torch.Tensor):
+        Q = torch.cat(self.W_Q(x).chunk(self.num_heads, dim=-1), dim=0)
+        K = torch.cat(self.W_K(x).chunk(self.num_heads, dim=-1), dim=0)
+        V = torch.cat(self.W_V(x).chunk(self.num_heads, dim=-1), dim=0)
+
+        score = torch.matmul(Q, K.transpose(-1, -2)) * (
+            self.dim_q ** (-0.5)
+        )  # / torch.sqrt(torch.Tensor(self.q)).to(self.device)
+
+        heatmap_score = score
+
+        score = torch.nn.functional.softmax(score, dim=-1)
+        weight_V = torch.cat(
+            torch.matmul(score, V).chunk(self.num_heads, dim=0), dim=-1
+        )
+
+        out = self.W_out(weight_V)
+
+        return out, heatmap_score
 
 
 class FxMultiHeadAttention(nn.Module):

@@ -17,7 +17,7 @@ from mmai import FxTransformer
 
 # read csv
 data = pd.read_csv(
-    "pytorch\\data\\mmai.transformers.features-1Days-EUR.USD-RAW.csv",
+    "pytorch\\data\\mmai.transformers.features-15Minute-EUR.USD-RAW.csv",
     header=0,
 )
 # exclude index
@@ -26,6 +26,14 @@ data = data.iloc[:, 1:]
 # prepare features and label
 X = data.iloc[:, 0:-1].values
 y = data.iloc[:, -1].values
+
+# X = (
+#     torch.from_numpy(X)
+#     .reshape(X.shape[0], 16, 4)
+#     .transpose(-1, -2)
+#     .reshape(X.shape[0], 64)
+#     .numpy()
+# )
 
 print(X.shape)
 print(y.shape)
@@ -67,6 +75,11 @@ class ClassifierDataset(Dataset):
 EPOCHS = 20
 BATCH_SIZE = 32
 LEARNING_RATE = 0.001
+device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+
+# define moodel
+model = FxTransformer(patch_dim=4, sequence_len=16, hidden_dim=128, num_heads=2,num_encoders=4)
+model.to(device)
 
 train_dataset = ClassifierDataset(
     torch.from_numpy(X_train).float(), torch.from_numpy(y_train).long()
@@ -81,13 +94,6 @@ test_dataset = ClassifierDataset(
 train_loader = DataLoader(dataset=train_dataset, batch_size=BATCH_SIZE)
 val_loader = DataLoader(dataset=val_dataset, batch_size=1)
 test_loader = DataLoader(dataset=test_dataset, batch_size=1)
-
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-print(device)
-
-# define moodel
-model = FxTransformer(patch_dim=8,sequence_len=8,hidden_dim=128)
-model.to(device)
 
 criterion = nn.CrossEntropyLoss()
 optimizer = optim.Adam(model.parameters(), lr=LEARNING_RATE)
@@ -106,6 +112,7 @@ def multi_acc(y_pred, y_test):
     acc = torch.round(acc * 100)
 
     return acc
+
 
 ###################################
 print("Begin training.")
